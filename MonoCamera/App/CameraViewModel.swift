@@ -12,6 +12,8 @@ final class CameraViewModel: ObservableObject {
     @Published var showsError = false
     @Published private(set) var isCapturing = false
     @Published private(set) var cameraReady = false
+    @Published private(set) var exposureBias: Float = 0
+    @Published private(set) var exposureRange: ClosedRange<Float> = -2...2
 
     let renderer: MetalPreviewRenderer?
     private let controller: CameraController?
@@ -30,6 +32,13 @@ final class CameraViewModel: ObservableObject {
         renderer?.update(parameters: draft, compare: false)
         self.controller?.onStateChange = { [weak self] ready in
             Task { @MainActor in self?.cameraReady = ready }
+        }
+        self.controller?.onExposureRange = { [weak self] range in
+            Task { @MainActor in
+                guard let self else { return }
+                self.exposureRange = range
+                self.updateExposure(self.exposureBias)
+            }
         }
     }
 
@@ -52,7 +61,10 @@ final class CameraViewModel: ObservableObject {
             controller.start { [weak self] error in
                 guard let self else { return }
                 self.starting = false
-                if let error { self.show(error) } else { self.cameraReady = true }
+                if let error { self.show(error) } else {
+                    self.cameraReady = true
+                    controller.setExposureBias(self.exposureBias)
+                }
             }
             // Request add-only access before the first capture, while camera startup is in progress.
             _ = await PhotoLibraryService.requestAddPermission()
@@ -107,6 +119,11 @@ final class CameraViewModel: ObservableObject {
     func updateContrast(_ value: Float) {
         draft.contrast = value
         publishPreview()
+    }
+
+    func updateExposure(_ value: Float) {
+        exposureBias = min(exposureRange.upperBound, max(exposureRange.lowerBound, value))
+        controller?.setExposureBias(exposureBias)
     }
 
     func reset() {

@@ -8,28 +8,31 @@ struct CameraView: View {
         GeometryReader { geometry in
             ZStack(alignment: .bottom) {
                 Color.black.ignoresSafeArea()
+                if let renderer = model.renderer {
+                    CameraPreviewView(renderer: renderer)
+                        .frame(width: geometry.size.width,
+                               height: min(geometry.size.height, geometry.size.width * 4 / 3))
+                        .frame(width: geometry.size.width, height: geometry.size.height)
+                } else {
+                    Text("Metal недоступен").foregroundStyle(.white)
+                }
                 VStack(spacing: 0) {
                     HStack {
-                        Text("MONO").font(.system(size: 13, weight: .semibold, design: .monospaced))
+                        Text("MONO")
+                            .font(.system(size: 13, weight: .semibold, design: .monospaced))
                         Spacer()
-                        Text("1×").font(.system(size: 13, weight: .medium, design: .monospaced))
+                        profileMenu
                     }
-                    .foregroundStyle(.white.opacity(0.8))
-                    .padding(.horizontal, 24).frame(height: 44)
-
-                    if let renderer = model.renderer {
-                        CameraPreviewView(renderer: renderer)
-                            .aspectRatio(0.75, contentMode: .fit)
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .clipped()
-                    } else {
-                        Text("Metal недоступен").foregroundStyle(.white)
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 24)
+                    .frame(height: 54)
+                    Spacer(minLength: 0)
+                    if model.editorVisible {
+                        editor
+                            .padding(.bottom, 10)
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
                     }
-
-                    presetStrip
-                        .frame(height: 62)
-
+                    exposureControl
                     HStack {
                         Button { model.toggleEditor() } label: {
                             Image(systemName: "slider.horizontal.3")
@@ -46,18 +49,13 @@ struct CameraView: View {
                         .opacity(model.isCapturing ? 0.5 : 1)
                         .accessibilityLabel("Снять фото")
                         Spacer()
-                        Text(model.presets.first(where: { $0.number == model.selectedNumber })?.label ?? "AA")
+                        Text("1×")
                             .font(.system(size: 18, weight: .semibold, design: .monospaced))
                             .frame(width: 64, height: 64)
                     }
                     .foregroundStyle(.white)
                     .padding(.horizontal, 32)
                     .frame(height: 104)
-                }
-                if model.editorVisible {
-                    editor
-                        .padding(.bottom, 166)
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
             }
             .frame(width: geometry.size.width, height: geometry.size.height)
@@ -74,42 +72,72 @@ struct CameraView: View {
         }
     }
 
-    private var presetStrip: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 14) {
+    private var profileMenu: some View {
+        Menu {
             ForEach(model.presets) { preset in
                 Button { model.select(preset.number) } label: {
-                    Text(preset.label)
-                        .font(.system(size: 15, weight: .semibold, design: .monospaced))
-                        .foregroundStyle(model.selectedNumber == preset.number ? .black : .white)
-                        .frame(width: 42, height: 42)
-                        .background(model.selectedNumber == preset.number ? .white : .white.opacity(0.16), in: Circle())
-                }
-                .contextMenu {
-                    if preset.number != 0 {
-                        ForEach((1...8).filter { candidate in
-                            !model.presets.contains(where: { $0.number == candidate })
-                        }, id: \.self) { number in
-                            Button("Номер \(number)") { model.rename(preset.number, to: number) }
-                        }
-                        Button("Удалить", role: .destructive) { model.delete(preset.number) }
+                    if model.selectedNumber == preset.number {
+                        Label(preset.label, systemImage: "checkmark")
+                    } else {
+                        Text(preset.label)
                     }
                 }
             }
+            Divider()
             if model.presets.count < 9 {
-                Button { model.createPreset() } label: {
-                    Image(systemName: "plus")
-                        .font(.system(size: 17, weight: .light))
-                        .foregroundStyle(.white)
-                        .frame(width: 42, height: 42)
-                        .background(.white.opacity(0.12), in: Circle())
+                Button("Создать профиль", systemImage: "plus") { model.createPreset() }
+                Menu("Изменить номер") {
+                    ForEach(model.presets.filter { $0.number != 0 }) { preset in
+                        Menu(preset.label) {
+                            ForEach((1...8).filter { candidate in
+                                !model.presets.contains(where: { $0.number == candidate })
+                            }, id: \.self) { number in
+                                Button(String(number)) { model.rename(preset.number, to: number) }
+                            }
+                        }
+                    }
                 }
-                .accessibilityLabel("Создать профиль")
             }
+            if model.presets.contains(where: { $0.number != 0 }) {
+                Menu("Удалить профиль") {
+                    ForEach(model.presets.filter { $0.number != 0 }) { preset in
+                        Button(role: .destructive) { model.delete(preset.number) } label: {
+                            Text(preset.label)
+                        }
+                    }
+                }
             }
-            .padding(.horizontal, 16)
-            .frame(minWidth: 0)
+        } label: {
+            HStack(spacing: 6) {
+                Text(model.presets.first(where: { $0.number == model.selectedNumber })?.label ?? "AA")
+                Image(systemName: "chevron.down").font(.system(size: 10, weight: .semibold))
+            }
+            .font(.system(size: 15, weight: .semibold, design: .monospaced))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 9)
+            .background(.black.opacity(0.65), in: Capsule())
         }
+        .accessibilityLabel("Выбрать профиль")
+    }
+
+    private var exposureControl: some View {
+        HStack(spacing: 12) {
+            Text("EV")
+            Slider(value: Binding(get: { model.exposureBias }, set: { model.updateExposure($0) }),
+                   in: model.exposureRange)
+                .tint(.white)
+                .disabled(!model.cameraReady)
+            Text(String(format: "%+.1f", model.exposureBias))
+                .frame(width: 42, alignment: .trailing)
+        }
+        .font(.system(size: 12, weight: .medium, design: .monospaced))
+        .foregroundStyle(.white)
+        .padding(.horizontal, 16)
+        .frame(height: 52)
+        .background(.black.opacity(0.65), in: Capsule())
+        .padding(.horizontal, 24)
+        .padding(.bottom, 10)
     }
 
     private var editor: some View {

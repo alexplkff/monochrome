@@ -7,11 +7,14 @@ final class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDele
     private let sessionQueue = DispatchQueue(label: "monocamera.session", qos: .userInitiated)
     private let videoQueue = DispatchQueue(label: "monocamera.video", qos: .userInteractive)
     private let renderer: MetalPreviewRenderer
+    private var captureDevice: AVCaptureDevice?
     private var configured = false
     private var wantsRunning = false
     private var captures: [Int64: PhotoDelegate] = [:]
     private var observers: [NSObjectProtocol] = []
     var onStateChange: ((Bool) -> Void)?
+    var onExposureRange: ((ClosedRange<Float>) -> Void)?
+    @MainActor private var pendingExposureUpdate: DispatchWorkItem?
 
     init(renderer: MetalPreviewRenderer) {
         self.renderer = renderer
@@ -54,6 +57,25 @@ final class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDele
         }
     }
 
+    @MainActor
+    func setExposureBias(_ bias: Float) {
+        pendingExposureUpdate?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            guard let self, let device = self.captureDevice else { return }
+            let value = min(device.maxExposureTargetBias, max(device.minExposureTargetBias, bias))
+            do {
+                try device.lockForConfiguration()
+                device.setExposureTargetBias(value, completionHandler: nil)
+                device.unlockForConfiguration()
+            } catch {
+                NSLog("Exposure adjustment failed: %@", String(describing: error))
+            }
+        }
+        pendingExposureUpdate = work
+        // Coalesce slider changes so the capture session does not queue every intermediate value.
+        sessionQueue.asyncAfter(deadline: .now() + .milliseconds(24), execute: work)
+    }
+
     private func resumeAfterInterruption() {
         sessionQueue.async {
             guard self.wantsRunning else { return }
@@ -91,6 +113,16 @@ final class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDele
             throw CameraError.unavailable
         }
         let input = try AVCaptureDeviceInput(device: device)
+        captureDevice = device
+        if device.isExposureModeSupported(.continuousAutoExposure) {
+            try device.lockForConfiguration()
+            device.exposureMode = .continuousAutoExposure
+            device.unlockForConfiguration()
+        }
+        let lower = max(-2, device.minExposureTargetBias)
+        let upper = min(2, device.maxExposureTargetBias)
+        let range: ClosedRange<Float> = lower <= upper ? lower...upper : 0...0
+        DispatchQueue.main.async { self.onExposureRange?(range) }
         let video = AVCaptureVideoDataOutput()
         video.alwaysDiscardsLateVideoFrames = true
         video.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA]

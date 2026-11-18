@@ -51,11 +51,14 @@ final class MetalPreviewRenderer: NSObject, MTKViewDelegate, @unchecked Sendable
         let source = CIImage(cvPixelBuffer: buffer)
         let filtered = engine.apply(source, parameters: settings, compare: showsColor)
         let target = CGRect(origin: .zero, size: view.drawableSize)
-        let scale = max(target.width / filtered.extent.width, target.height / filtered.extent.height)
+        // Show the entire camera frame. Any unused area stays black instead of cropping the photo.
+        let scale = min(target.width / filtered.extent.width, target.height / filtered.extent.height)
         let scaled = filtered.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
         let x = (target.width - scaled.extent.width) / 2 - scaled.extent.minX
         let y = (target.height - scaled.extent.height) / 2 - scaled.extent.minY
+        let background = CIImage(color: .black).cropped(to: target)
         let output = scaled.transformed(by: CGAffineTransform(translationX: x, y: y))
+            .composited(over: background)
         engine.context.render(output, to: drawable.texture, commandBuffer: commandBuffer,
                               bounds: target, colorSpace: engine.colorSpace)
         commandBuffer.addCompletedHandler { _ in _ = buffer }
