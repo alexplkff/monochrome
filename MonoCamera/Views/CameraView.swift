@@ -2,22 +2,22 @@ import SwiftUI
 
 struct CameraView: View {
     @StateObject private var model = CameraViewModel()
+    @State private var levelChannel: LevelChannel = .master
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         GeometryReader { geometry in
-            ZStack(alignment: .bottom) {
+            ZStack(alignment: .top) {
                 Color.black.ignoresSafeArea()
+                if let renderer = model.renderer {
+                    CameraPreviewView(renderer: renderer)
+                        .frame(width: geometry.size.width,
+                               height: geometry.size.width * 4 / 3)
+                } else {
+                    Text("Metal недоступен")
+                        .foregroundStyle(.white)
+                }
                 VStack(spacing: 0) {
-                    if let renderer = model.renderer {
-                        CameraPreviewView(renderer: renderer)
-                            .frame(width: geometry.size.width,
-                                   height: geometry.size.width * 4 / 3)
-                            .fixedSize(horizontal: false, vertical: true)
-                    } else {
-                        Text("Metal недоступен")
-                            .foregroundStyle(.white)
-                    }
                     Spacer(minLength: 0)
                     HStack {
                         profileMenu
@@ -48,11 +48,7 @@ struct CameraView: View {
                     .padding(.horizontal, 32)
                     .frame(height: 104)
                 }
-                if model.editorVisible {
-                    editor
-                        .padding(.bottom, 210)
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
-                }
+                .frame(width: geometry.size.width, height: geometry.size.height)
             }
             .frame(width: geometry.size.width, height: geometry.size.height)
         }
@@ -65,6 +61,12 @@ struct CameraView: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text(model.errorMessage)
+        }
+        .sheet(isPresented: $model.editorVisible, onDismiss: { model.cancel() }) {
+            editor
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+                .preferredColorScheme(.dark)
         }
     }
 
@@ -160,37 +162,159 @@ struct CameraView: View {
     }
 
     private var editor: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 0) {
             HStack {
                 Text("ПРОФИЛЬ \(model.selectedNumber == 0 ? "AA" : String(model.selectedNumber))")
                     .font(.system(size: 12, weight: .semibold, design: .monospaced))
                 Spacer()
-                Text("COMPARE")
-                    .font(.system(size: 11, weight: .medium, design: .monospaced))
-                    .padding(8)
-                    .background(.white.opacity(0.15), in: Capsule())
-                    .gesture(DragGesture(minimumDistance: 0)
-                        .onChanged { _ in model.compare(true) }
-                        .onEnded { _ in model.compare(false) })
-                    .accessibilityLabel("Удерживайте для цветного изображения")
-            }
-            editorSlider("RED", value: model.draft.redWeight, range: 0...1) { model.updateWeight(0, value: $0) }
-            editorSlider("GREEN", value: model.draft.greenWeight, range: 0...1) { model.updateWeight(1, value: $0) }
-            editorSlider("BLUE", value: model.draft.blueWeight, range: 0...1) { model.updateWeight(2, value: $0) }
-            editorSlider("CONTRAST", value: model.draft.contrast, range: -100...100) { model.updateContrast($0) }
-            HStack {
-                Button("Reset") { model.reset() }
-                Spacer()
+                Button { model.shutter() } label: {
+                    Image(systemName: "camera")
+                }
+                .disabled(!model.cameraReady || model.isCapturing || model.isSwitchingLens)
+                .accessibilityLabel("Снять фото с текущими настройками")
+                .padding(.trailing, 12)
                 Button("Cancel") { model.cancel() }
-                Button("Save") { model.save() }.fontWeight(.semibold).padding(.leading, 20)
+                Button("Save") { model.save() }
+                    .fontWeight(.semibold)
+                    .padding(.leading, 12)
             }
-            .font(.system(size: 14, design: .monospaced))
-            .padding(.top, 8)
+            .padding(.horizontal, 20)
+            .padding(.top, 30)
+            .padding(.bottom, 12)
+            ScrollView {
+                VStack(spacing: 12) {
+                    HStack {
+                        Text("УРОВНИ")
+                            .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                        Spacer()
+                        Text("COMPARE")
+                            .font(.system(size: 11, weight: .medium, design: .monospaced))
+                            .padding(8)
+                            .background(.white.opacity(0.15), in: Capsule())
+                            .gesture(DragGesture(minimumDistance: 0)
+                                .onChanged { _ in model.compare(true) }
+                                .onEnded { _ in model.compare(false) })
+                            .accessibilityLabel("Удерживайте для цветного изображения")
+                    }
+                    channelPicker
+                    levelsGraph
+                        .frame(height: 220)
+                    levelHandles
+                        .frame(height: 36)
+                    HStack {
+                        Text("ЧЁРНЫЙ")
+                        Spacer()
+                        Text("СРЕДНИЙ")
+                        Spacer()
+                        Text("БЕЛЫЙ")
+                    }
+                    .font(.system(size: 10, weight: .medium, design: .monospaced))
+                    .foregroundStyle(.white.opacity(0.6))
+                    Divider().padding(.vertical, 8)
+                    editorSlider("RED", value: model.draft.redWeight, range: 0...1) { model.updateWeight(0, value: $0) }
+                    editorSlider("GREEN", value: model.draft.greenWeight, range: 0...1) { model.updateWeight(1, value: $0) }
+                    editorSlider("BLUE", value: model.draft.blueWeight, range: 0...1) { model.updateWeight(2, value: $0) }
+                    editorSlider("CONTRAST", value: model.draft.contrast, range: -100...100) { model.updateContrast($0) }
+                    Button("Reset") { model.reset() }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.top, 8)
+                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 30)
+            }
         }
-        .padding(18)
         .foregroundStyle(.white)
-        .background(.black.opacity(0.88), in: RoundedRectangle(cornerRadius: 18))
-        .padding(.horizontal, 16)
+        .background(Color(white: 0.12))
+    }
+
+    private var channelPicker: some View {
+        HStack(spacing: 18) {
+            ForEach(LevelChannel.allCases) { channel in
+                Button { levelChannel = channel } label: {
+                    Circle()
+                        .strokeBorder(channelColor(channel), lineWidth: levelChannel == channel ? 4 : 2)
+                        .background(Circle().fill(levelChannel == channel ? channelColor(channel).opacity(0.25) : .clear))
+                        .frame(width: 28, height: 28)
+                }
+                .accessibilityLabel(channel.label)
+            }
+            Spacer()
+        }
+    }
+
+    private var levelsGraph: some View {
+        Canvas { context, size in
+            let bounds = CGRect(origin: .zero, size: size)
+            context.fill(Path(bounds), with: .color(Color(white: 0.16)))
+            for index in 1..<4 {
+                let x = size.width * CGFloat(index) / 4
+                let y = size.height * CGFloat(index) / 4
+                context.stroke(Path { path in
+                    path.move(to: CGPoint(x: x, y: 0)); path.addLine(to: CGPoint(x: x, y: size.height))
+                    path.move(to: CGPoint(x: 0, y: y)); path.addLine(to: CGPoint(x: size.width, y: y))
+                }, with: .color(.white.opacity(0.12)), lineWidth: 1)
+            }
+            let bins = model.histogram[levelChannel.rawValue]
+            var histogram = Path()
+            histogram.move(to: CGPoint(x: 0, y: size.height))
+            for (index, value) in bins.enumerated() {
+                histogram.addLine(to: CGPoint(x: size.width * CGFloat(index) / CGFloat(max(1, bins.count - 1)),
+                                              y: size.height * (1 - CGFloat(value))))
+            }
+            histogram.addLine(to: CGPoint(x: size.width, y: size.height))
+            histogram.closeSubpath()
+            context.fill(histogram, with: .color(channelColor(levelChannel).opacity(0.25)))
+            context.stroke(Path { path in
+                path.move(to: CGPoint(x: 0, y: size.height))
+                path.addLine(to: CGPoint(x: size.width, y: 0))
+            }, with: .color(.white.opacity(0.35)), lineWidth: 1)
+            let levels = model.draft.levels(for: levelChannel)
+            var curve = Path()
+            for index in 0...128 {
+                let input = Float(index) / 128
+                let point = CGPoint(x: size.width * CGFloat(input),
+                                    y: size.height * (1 - CGFloat(levels.map(input))))
+                if index == 0 { curve.move(to: point) } else { curve.addLine(to: point) }
+            }
+            context.stroke(curve, with: .color(channelColor(levelChannel)), lineWidth: 2)
+            context.stroke(Path(bounds), with: .color(.white.opacity(0.5)), lineWidth: 1)
+        }
+        .accessibilityLabel("Гистограмма и кривая уровней: \(levelChannel.label)")
+    }
+
+    private var levelHandles: some View {
+        GeometryReader { geometry in
+            let levels = model.draft.levels(for: levelChannel)
+            let values = [levels.black, levels.middle, levels.white]
+            ZStack(alignment: .topLeading) {
+                Rectangle()
+                    .fill(.white.opacity(0.35))
+                    .frame(height: 3)
+                    .position(x: geometry.size.width / 2, y: 18)
+                ForEach(0..<3, id: \.self) { handle in
+                    Circle()
+                        .fill(.white)
+                        .overlay(Circle().stroke(.black, lineWidth: 2))
+                        .frame(width: 22, height: 22)
+                        .position(x: 11 + CGFloat(values[handle]) * max(1, geometry.size.width - 22), y: 18)
+                        .gesture(DragGesture(minimumDistance: 0, coordinateSpace: .named("levelBar")).onChanged { gesture in
+                            model.updateLevels(levelChannel, handle: handle,
+                                               value: Float((gesture.location.x - 11) / max(1, geometry.size.width - 22)))
+                        })
+                        .accessibilityLabel(["Чёрная точка", "Средняя точка", "Белая точка"][handle])
+                }
+            }
+            .coordinateSpace(name: "levelBar")
+        }
+    }
+
+    private func channelColor(_ channel: LevelChannel) -> Color {
+        switch channel {
+        case .master: .white
+        case .red: .red
+        case .green: .green
+        case .blue: .blue
+        }
     }
 
     private func editorSlider(_ title: String, value: Float, range: ClosedRange<Float>,

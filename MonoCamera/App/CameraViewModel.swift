@@ -17,6 +17,7 @@ final class CameraViewModel: ObservableObject {
     @Published private(set) var availableLenses: [CameraLens] = [.wide]
     @Published private(set) var selectedLens: CameraLens = .wide
     @Published private(set) var isSwitchingLens = false
+    @Published private(set) var histogram = Array(repeating: Array(repeating: Float(0), count: 64), count: 4)
 
     let renderer: MetalPreviewRenderer?
     private let controller: CameraController?
@@ -48,6 +49,9 @@ final class CameraViewModel: ObservableObject {
                 self?.availableLenses = lenses
                 self?.selectedLens = selected
             }
+        }
+        self.controller?.onHistogram = { [weak self] bins in
+            self?.histogram = bins
         }
     }
 
@@ -127,6 +131,13 @@ final class CameraViewModel: ObservableObject {
 
     func updateContrast(_ value: Float) {
         draft.contrast = value
+        publishPreview()
+    }
+
+    func updateLevels(_ channel: LevelChannel, handle: Int, value: Float) {
+        var levels = draft.levels(for: channel)
+        levels.set(handle, to: value)
+        draft.setLevels(levels, for: channel)
         publishPreview()
     }
 

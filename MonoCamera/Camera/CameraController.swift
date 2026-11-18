@@ -45,10 +45,12 @@ final class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDele
     private var configured = false
     private var wantsRunning = false
     private var captures: [Int64: PhotoDelegate] = [:]
+    private var histogramFrames = 0
     private var observers: [NSObjectProtocol] = []
     var onStateChange: ((Bool) -> Void)?
     var onExposureRange: ((ClosedRange<Float>) -> Void)?
     var onLensesAvailable: (([CameraLens], CameraLens) -> Void)?
+    var onHistogram: (([[Float]]) -> Void)?
     @MainActor private var pendingExposureUpdate: DispatchWorkItem?
 
     init(renderer: MetalPreviewRenderer) {
@@ -241,6 +243,41 @@ final class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDele
                        from connection: AVCaptureConnection) {
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
         renderer.submit(pixelBuffer)
+        histogramFrames += 1
+        if histogramFrames >= 15 {
+            histogramFrames = 0
+            let histogram = Self.histogram(of: pixelBuffer)
+            DispatchQueue.main.async { self.onHistogram?(histogram) }
+        }
+    }
+
+    private static func histogram(of buffer: CVPixelBuffer) -> [[Float]] {
+        let bins = 64
+        var counts = Array(repeating: Array(repeating: Float(0), count: bins), count: 4)
+        guard CVPixelBufferLockBaseAddress(buffer, .readOnly) == kCVReturnSuccess else { return counts }
+        defer { CVPixelBufferUnlockBaseAddress(buffer, .readOnly) }
+        guard let base = CVPixelBufferGetBaseAddress(buffer) else { return counts }
+        let pixels = base.assumingMemoryBound(to: UInt8.self)
+        let width = CVPixelBufferGetWidth(buffer)
+        let height = CVPixelBufferGetHeight(buffer)
+        let bytesPerRow = CVPixelBufferGetBytesPerRow(buffer)
+        for y in stride(from: 0, to: height, by: max(1, height / 96)) {
+            for x in stride(from: 0, to: width, by: max(1, width / 128)) {
+                let offset = y * bytesPerRow + x * 4
+                let b = Int(pixels[offset])
+                let g = Int(pixels[offset + 1])
+                let r = Int(pixels[offset + 2])
+                let luma = (54 * r + 183 * g + 19 * b) / 256
+                counts[0][min(bins - 1, luma * bins / 256)] += 1
+                counts[1][min(bins - 1, r * bins / 256)] += 1
+                counts[2][min(bins - 1, g * bins / 256)] += 1
+                counts[3][min(bins - 1, b * bins / 256)] += 1
+            }
+        }
+        return counts.map { channel in
+            let peak = max(1, channel.max() ?? 1)
+            return channel.map { sqrtf($0 / peak) }
+        }
     }
 }
 

@@ -66,4 +66,34 @@ final class MonoCameraTests: XCTestCase {
         XCTAssertGreaterThan(brightness(onlyRed), 245)
         XCTAssertLessThan(brightness(onlyBlue), 10)
     }
+
+    func testLevelsPreserveOldProfilesAndMoveMiddleGray() throws {
+        let oldJSON = #"{"redWeight":0.2126,"greenWeight":0.7152,"blueWeight":0.0722,"contrast":0}"#
+        var parameters = try JSONDecoder().decode(FilterParameters.self, from: Data(oldJSON.utf8))
+        XCTAssertFalse(parameters.hasLevels)
+        var levels = parameters.masterLevels
+        levels.set(1, to: 0.25)
+        parameters.masterLevels = levels
+        XCTAssertEqual(levels.map(0.25), 0.5, accuracy: 0.001)
+        XCTAssertGreaterThan(levels.map(0.5), 0.5)
+        let reopened = try JSONDecoder().decode(FilterParameters.self, from: JSONEncoder().encode(parameters))
+        XCTAssertEqual(reopened, parameters)
+    }
+
+    func testLevelsAffectPreviewPixels() throws {
+        guard let device = MTLCreateSystemDefaultDevice() else { throw XCTSkip("Metal unavailable") }
+        let engine = FilterEngine(metalDevice: device)
+        let gray = CIImage(color: CIColor(red: 0.5, green: 0.5, blue: 0.5))
+            .cropped(to: CGRect(x: 0, y: 0, width: 1, height: 1))
+        func value(_ parameters: FilterParameters) -> UInt8 {
+            var pixel = [UInt8](repeating: 0, count: 4)
+            engine.context.render(engine.apply(gray, parameters: parameters), toBitmap: &pixel,
+                                  rowBytes: 4, bounds: gray.extent, format: .RGBA8,
+                                  colorSpace: engine.colorSpace)
+            return pixel[0]
+        }
+        var changed = FilterParameters.initialAA
+        changed.masterLevels.set(1, to: 0.25)
+        XCTAssertGreaterThan(value(changed), value(.initialAA))
+    }
 }
