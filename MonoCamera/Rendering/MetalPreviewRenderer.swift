@@ -7,6 +7,7 @@ final class MetalPreviewRenderer: NSObject, MTKViewDelegate, @unchecked Sendable
     private let commandQueue: MTLCommandQueue
     private let lock = NSLock()
     private var latestBuffer: CVPixelBuffer?
+    private var latestFrameSize: CGSize?
     private var parameters: FilterParameters = .initialAA
     private var compare = false
     private var generation: UInt64 = 0
@@ -23,6 +24,7 @@ final class MetalPreviewRenderer: NSObject, MTKViewDelegate, @unchecked Sendable
     func submit(_ buffer: CVPixelBuffer) {
         lock.lock()
         latestBuffer = buffer // Replace any unrendered frame; never accumulate a queue.
+        latestFrameSize = CGSize(width: CVPixelBufferGetWidth(buffer), height: CVPixelBufferGetHeight(buffer))
         generation &+= 1
         lock.unlock()
     }
@@ -30,8 +32,15 @@ final class MetalPreviewRenderer: NSObject, MTKViewDelegate, @unchecked Sendable
     func clear() {
         lock.lock()
         latestBuffer = nil
+        latestFrameSize = nil
         generation &+= 1
         lock.unlock()
+    }
+
+    var frameSize: CGSize? {
+        lock.lock()
+        defer { lock.unlock() }
+        return latestFrameSize
     }
 
     func update(parameters: FilterParameters, compare: Bool) {

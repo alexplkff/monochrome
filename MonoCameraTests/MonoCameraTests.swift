@@ -1,5 +1,6 @@
 import XCTest
 import CoreImage
+import CoreGraphics
 import Metal
 #if canImport(MonoCamera)
 @testable import MonoCamera
@@ -95,5 +96,20 @@ final class MonoCameraTests: XCTestCase {
         var changed = FilterParameters.initialAA
         changed.masterLevels.set(1, to: 0.25)
         XCTAssertGreaterThan(value(changed), value(.initialAA))
+    }
+
+    func testTapFocusMapsPortraitImageAndIgnoresBlackBars() throws {
+        let preview = CGSize(width: 300, height: 500)
+        let frame = CGSize(width: 300, height: 400)
+        XCTAssertNil(FocusPointMapper.devicePoint(for: CGPoint(x: 150, y: 20),
+                                                   previewSize: preview, frameSize: frame))
+        let center = try XCTUnwrap(FocusPointMapper.devicePoint(for: CGPoint(x: 150, y: 250),
+                                                                 previewSize: preview, frameSize: frame))
+        XCTAssertEqual(center.x, 0.5, accuracy: 0.001)
+        XCTAssertEqual(center.y, 0.5, accuracy: 0.001)
+        let upperLeft = try XCTUnwrap(FocusPointMapper.devicePoint(for: CGPoint(x: 0, y: 50),
+                                                                    previewSize: preview, frameSize: frame))
+        XCTAssertEqual(upperLeft.x, 0, accuracy: 0.001)
+        XCTAssertEqual(upperLeft.y, 1, accuracy: 0.001)
     }
 }

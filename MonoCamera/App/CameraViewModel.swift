@@ -18,11 +18,14 @@ final class CameraViewModel: ObservableObject {
     @Published private(set) var selectedLens: CameraLens = .wide
     @Published private(set) var isSwitchingLens = false
     @Published private(set) var histogram = Array(repeating: Array(repeating: Float(0), count: 64), count: 4)
+    @Published private(set) var focusIndicatorPoint: CGPoint?
+    @Published private(set) var focusLocked = false
 
     let renderer: MetalPreviewRenderer?
     private let controller: CameraController?
     private let repository: PresetRepository
     private var starting = false
+    private var focusRequest = 0
 
     init() {
         let repository = PresetRepository()
@@ -88,6 +91,32 @@ final class CameraViewModel: ObservableObject {
         controller?.stop()
         cameraReady = false
         starting = false
+        focusRequest += 1
+        focusIndicatorPoint = nil
+        focusLocked = false
+    }
+
+    func focus(at viewPoint: CGPoint, previewSize: CGSize, lock: Bool) {
+        guard cameraReady, !isSwitchingLens, !isCapturing,
+              let frameSize = renderer?.frameSize, let controller,
+              let devicePoint = FocusPointMapper.devicePoint(for: viewPoint,
+                                                              previewSize: previewSize,
+                                                              frameSize: frameSize) else { return }
+        focusRequest += 1
+        let request = focusRequest
+        controller.focusAndExpose(at: devicePoint, lock: lock) { [weak self] error in
+            guard let self, self.focusRequest == request else { return }
+            if let error { self.show(error); return }
+            self.focusIndicatorPoint = viewPoint
+            self.focusLocked = lock
+            if !lock {
+                Task { @MainActor [weak self] in
+                    try? await Task.sleep(for: .seconds(2))
+                    guard let self, self.focusRequest == request, !self.focusLocked else { return }
+                    self.focusIndicatorPoint = nil
+                }
+            }
+        }
     }
 
     func select(_ number: Int) {
@@ -157,6 +186,9 @@ final class CameraViewModel: ObservableObject {
                 self.show(error)
             } else {
                 self.selectedLens = lens
+                self.focusRequest += 1
+                self.focusIndicatorPoint = nil
+                self.focusLocked = false
                 controller.setExposureBias(self.exposureBias)
             }
         }

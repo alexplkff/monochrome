@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct CameraView: View {
     @StateObject private var model = CameraViewModel()
@@ -13,6 +14,8 @@ struct CameraView: View {
                     CameraPreviewView(renderer: renderer)
                         .frame(width: geometry.size.width,
                                height: geometry.size.width * 4 / 3)
+                    focusSurface(size: CGSize(width: geometry.size.width,
+                                              height: geometry.size.width * 4 / 3))
                 } else {
                     Text("Metal недоступен")
                         .foregroundStyle(.white)
@@ -67,6 +70,34 @@ struct CameraView: View {
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
                 .preferredColorScheme(.dark)
+        }
+    }
+
+    private func focusSurface(size: CGSize) -> some View {
+        FocusTouchView { location, lock in
+            model.focus(at: location, previewSize: size, lock: lock)
+        }
+        .frame(width: size.width, height: size.height)
+        .overlay {
+            ZStack(alignment: .top) {
+                if let point = model.focusIndicatorPoint {
+                    RoundedRectangle(cornerRadius: 5)
+                        .stroke(Color.yellow, lineWidth: 2)
+                        .frame(width: 74, height: 74)
+                        .position(point)
+                }
+                if model.focusLocked {
+                    Text("AE/AF LOCK")
+                        .font(.system(size: 13, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(.yellow)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(.black.opacity(0.7), in: Capsule())
+                        .padding(.top, 14)
+                }
+            }
+            .frame(width: size.width, height: size.height)
+            .allowsHitTesting(false)
         }
     }
 
@@ -327,5 +358,45 @@ struct CameraView: View {
                 .frame(width: 44, alignment: .trailing)
         }
         .font(.system(size: 11, weight: .medium, design: .monospaced))
+    }
+}
+
+private struct FocusTouchView: UIViewRepresentable {
+    var onTouch: (CGPoint, Bool) -> Void
+
+    func makeCoordinator() -> Coordinator { Coordinator(onTouch: onTouch) }
+
+    func makeUIView(context: Context) -> UIView {
+        let view = UIView()
+        view.backgroundColor = .clear
+        view.isOpaque = false
+        let tap = UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.tapped(_:)))
+        let hold = UILongPressGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.held(_:)))
+        hold.minimumPressDuration = 0.55
+        hold.allowableMovement = 20
+        tap.require(toFail: hold)
+        view.addGestureRecognizer(tap)
+        view.addGestureRecognizer(hold)
+        return view
+    }
+
+    func updateUIView(_ uiView: UIView, context: Context) {
+        context.coordinator.onTouch = onTouch
+    }
+
+    final class Coordinator: NSObject {
+        var onTouch: (CGPoint, Bool) -> Void
+
+        init(onTouch: @escaping (CGPoint, Bool) -> Void) { self.onTouch = onTouch }
+
+        @objc func tapped(_ recognizer: UITapGestureRecognizer) {
+            guard recognizer.state == .ended, let view = recognizer.view else { return }
+            onTouch(recognizer.location(in: view), false)
+        }
+
+        @objc func held(_ recognizer: UILongPressGestureRecognizer) {
+            guard recognizer.state == .began, let view = recognizer.view else { return }
+            onTouch(recognizer.location(in: view), true)
+        }
     }
 }
