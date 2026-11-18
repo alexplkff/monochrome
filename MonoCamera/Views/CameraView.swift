@@ -8,30 +8,23 @@ struct CameraView: View {
         GeometryReader { geometry in
             ZStack(alignment: .bottom) {
                 Color.black.ignoresSafeArea()
-                if let renderer = model.renderer {
-                    CameraPreviewView(renderer: renderer)
-                        .frame(width: geometry.size.width,
-                               height: min(geometry.size.height, geometry.size.width * 4 / 3))
-                        .frame(width: geometry.size.width, height: geometry.size.height)
-                } else {
-                    Text("Metal недоступен").foregroundStyle(.white)
-                }
                 VStack(spacing: 0) {
-                    HStack {
-                        Text("MONO")
-                            .font(.system(size: 13, weight: .semibold, design: .monospaced))
-                        Spacer()
-                        profileMenu
+                    if let renderer = model.renderer {
+                        CameraPreviewView(renderer: renderer)
+                            .frame(width: geometry.size.width,
+                                   height: geometry.size.width * 4 / 3)
+                            .fixedSize(horizontal: false, vertical: true)
+                    } else {
+                        Text("Metal недоступен")
+                            .foregroundStyle(.white)
                     }
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 24)
-                    .frame(height: 54)
                     Spacer(minLength: 0)
-                    if model.editorVisible {
-                        editor
-                            .padding(.bottom, 10)
-                            .transition(.move(edge: .bottom).combined(with: .opacity))
+                    HStack {
+                        profileMenu
+                        Spacer()
                     }
+                    .padding(.horizontal, 24)
+                    .frame(height: 44)
                     exposureControl
                     HStack {
                         Button { model.toggleEditor() } label: {
@@ -45,17 +38,20 @@ struct CameraView: View {
                                 .frame(width: 64, height: 64)
                                 .overlay(Circle().stroke(.white, lineWidth: 2).frame(width: 76, height: 76))
                         }
-                        .disabled(!model.cameraReady || model.isCapturing)
+                        .disabled(!model.cameraReady || model.isCapturing || model.isSwitchingLens)
                         .opacity(model.isCapturing ? 0.5 : 1)
                         .accessibilityLabel("Снять фото")
                         Spacer()
-                        Text("1×")
-                            .font(.system(size: 18, weight: .semibold, design: .monospaced))
-                            .frame(width: 64, height: 64)
+                        cameraMenu
                     }
                     .foregroundStyle(.white)
                     .padding(.horizontal, 32)
                     .frame(height: 104)
+                }
+                if model.editorVisible {
+                    editor
+                        .padding(.bottom, 210)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
             }
             .frame(width: geometry.size.width, height: geometry.size.height)
@@ -138,6 +134,29 @@ struct CameraView: View {
         .background(.black.opacity(0.65), in: Capsule())
         .padding(.horizontal, 24)
         .padding(.bottom, 10)
+    }
+
+    private var cameraMenu: some View {
+        Menu {
+            ForEach(model.availableLenses) { lens in
+                Button { model.selectLens(lens) } label: {
+                    if model.selectedLens == lens {
+                        Label("\(lens.label) \(lens.name)", systemImage: "checkmark")
+                    } else {
+                        Text("\(lens.label) \(lens.name)")
+                    }
+                }
+            }
+        } label: {
+            HStack(spacing: 3) {
+                Text(model.selectedLens.label)
+                Image(systemName: "chevron.down").font(.system(size: 9, weight: .semibold))
+            }
+            .font(.system(size: 17, weight: .semibold, design: .monospaced))
+            .frame(width: 64, height: 64)
+        }
+        .disabled(!model.cameraReady || model.isCapturing || model.isSwitchingLens)
+        .accessibilityLabel("Выбрать камеру")
     }
 
     private var editor: some View {

@@ -14,6 +14,9 @@ final class CameraViewModel: ObservableObject {
     @Published private(set) var cameraReady = false
     @Published private(set) var exposureBias: Float = 0
     @Published private(set) var exposureRange: ClosedRange<Float> = -2...2
+    @Published private(set) var availableLenses: [CameraLens] = [.wide]
+    @Published private(set) var selectedLens: CameraLens = .wide
+    @Published private(set) var isSwitchingLens = false
 
     let renderer: MetalPreviewRenderer?
     private let controller: CameraController?
@@ -38,6 +41,12 @@ final class CameraViewModel: ObservableObject {
                 guard let self else { return }
                 self.exposureRange = range
                 self.updateExposure(self.exposureBias)
+            }
+        }
+        self.controller?.onLensesAvailable = { [weak self] lenses, selected in
+            Task { @MainActor in
+                self?.availableLenses = lenses
+                self?.selectedLens = selected
             }
         }
     }
@@ -124,6 +133,22 @@ final class CameraViewModel: ObservableObject {
     func updateExposure(_ value: Float) {
         exposureBias = min(exposureRange.upperBound, max(exposureRange.lowerBound, value))
         controller?.setExposureBias(exposureBias)
+    }
+
+    func selectLens(_ lens: CameraLens) {
+        guard cameraReady, !isCapturing, !isSwitchingLens, availableLenses.contains(lens),
+              let controller else { return }
+        isSwitchingLens = true
+        controller.switchLens(to: lens) { [weak self] error in
+            guard let self else { return }
+            self.isSwitchingLens = false
+            if let error {
+                self.show(error)
+            } else {
+                self.selectedLens = lens
+                controller.setExposureBias(self.exposureBias)
+            }
+        }
     }
 
     func reset() {

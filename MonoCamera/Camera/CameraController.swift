@@ -1,6 +1,38 @@
 import AVFoundation
 import Foundation
 
+enum CameraLens: String, CaseIterable, Identifiable, Sendable {
+    case ultraWide
+    case wide
+    case telephoto
+
+    var id: String { rawValue }
+
+    var deviceType: AVCaptureDevice.DeviceType {
+        switch self {
+        case .ultraWide: .builtInUltraWideCamera
+        case .wide: .builtInWideAngleCamera
+        case .telephoto: .builtInTelephotoCamera
+        }
+    }
+
+    var label: String {
+        switch self {
+        case .ultraWide: "0.5×"
+        case .wide: "1×"
+        case .telephoto: "4×"
+        }
+    }
+
+    var name: String {
+        switch self {
+        case .ultraWide: "Сверхширокая"
+        case .wide: "Основная"
+        case .telephoto: "Телефото"
+        }
+    }
+}
+
 final class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, @unchecked Sendable {
     let session = AVCaptureSession()
     private let photoOutput = AVCapturePhotoOutput()
@@ -8,12 +40,15 @@ final class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDele
     private let videoQueue = DispatchQueue(label: "monocamera.video", qos: .userInteractive)
     private let renderer: MetalPreviewRenderer
     private var captureDevice: AVCaptureDevice?
+    private var captureInput: AVCaptureDeviceInput?
+    private var devicesByLens: [CameraLens: AVCaptureDevice] = [:]
     private var configured = false
     private var wantsRunning = false
     private var captures: [Int64: PhotoDelegate] = [:]
     private var observers: [NSObjectProtocol] = []
     var onStateChange: ((Bool) -> Void)?
     var onExposureRange: ((ClosedRange<Float>) -> Void)?
+    var onLensesAvailable: (([CameraLens], CameraLens) -> Void)?
     @MainActor private var pendingExposureUpdate: DispatchWorkItem?
 
     init(renderer: MetalPreviewRenderer) {
@@ -108,21 +143,62 @@ final class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDele
         }
     }
 
+    func switchLens(to lens: CameraLens, completion: @escaping (Error?) -> Void) {
+        sessionQueue.async {
+            guard self.captures.isEmpty,
+                  let device = self.devicesByLens[lens],
+                  let previousInput = self.captureInput else {
+                DispatchQueue.main.async { completion(CameraError.unavailable) }
+                return
+            }
+            guard previousInput.device.uniqueID != device.uniqueID else {
+                DispatchQueue.main.async { completion(nil) }
+                return
+            }
+            do {
+                let newInput = try AVCaptureDeviceInput(device: device)
+                let range = try self.configureExposure(for: device)
+                self.session.beginConfiguration()
+                self.session.removeInput(previousInput)
+                guard self.session.canAddInput(newInput) else {
+                    self.session.addInput(previousInput)
+                    self.session.commitConfiguration()
+                    throw CameraError.configurationFailed
+                }
+                self.session.addInput(newInput)
+                self.session.commitConfiguration()
+                self.captureInput = newInput
+                self.captureDevice = device
+                self.applyPortraitRotation()
+                self.renderer.clear()
+                DispatchQueue.main.async {
+                    self.onExposureRange?(range)
+                    completion(nil)
+                }
+            } catch {
+                DispatchQueue.main.async { completion(error) }
+            }
+        }
+    }
+
     private func configure() throws {
-        guard let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back) else {
+        let discovery = AVCaptureDevice.DiscoverySession(
+            deviceTypes: CameraLens.allCases.map(\.deviceType), mediaType: .video, position: .back
+        )
+        devicesByLens = Dictionary(uniqueKeysWithValues: CameraLens.allCases.compactMap { lens in
+            discovery.devices.first(where: { $0.deviceType == lens.deviceType }).map { (lens, $0) }
+        })
+        guard let device = devicesByLens[.wide] else {
             throw CameraError.unavailable
         }
         let input = try AVCaptureDeviceInput(device: device)
         captureDevice = device
-        if device.isExposureModeSupported(.continuousAutoExposure) {
-            try device.lockForConfiguration()
-            device.exposureMode = .continuousAutoExposure
-            device.unlockForConfiguration()
+        captureInput = input
+        let range = try configureExposure(for: device)
+        DispatchQueue.main.async {
+            self.onExposureRange?(range)
+            self.onLensesAvailable?(CameraLens.allCases.filter { self.devicesByLens[$0] != nil }, .wide)
         }
-        let lower = max(-2, device.minExposureTargetBias)
-        let upper = min(2, device.maxExposureTargetBias)
-        let range: ClosedRange<Float> = lower <= upper ? lower...upper : 0...0
-        DispatchQueue.main.async { self.onExposureRange?(range) }
         let video = AVCaptureVideoDataOutput()
         video.alwaysDiscardsLateVideoFrames = true
         video.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA]
@@ -137,8 +213,24 @@ final class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDele
         session.addInput(input)
         session.addOutput(video)
         session.addOutput(photoOutput)
-        if let connection = video.connection(with: .video), connection.isVideoRotationAngleSupported(90) {
-            connection.videoRotationAngle = 90 // Portrait capture on the back camera.
+        applyPortraitRotation()
+    }
+
+    private func configureExposure(for device: AVCaptureDevice) throws -> ClosedRange<Float> {
+        if device.isExposureModeSupported(.continuousAutoExposure) {
+            try device.lockForConfiguration()
+            device.exposureMode = .continuousAutoExposure
+            device.unlockForConfiguration()
+        }
+        let lower = max(-2, device.minExposureTargetBias)
+        let upper = min(2, device.maxExposureTargetBias)
+        return lower <= upper ? lower...upper : 0...0
+    }
+
+    private func applyPortraitRotation() {
+        if let connection = session.outputs.compactMap({ $0 as? AVCaptureVideoDataOutput }).first?.connection(with: .video),
+           connection.isVideoRotationAngleSupported(90) {
+            connection.videoRotationAngle = 90
         }
         if let connection = photoOutput.connection(with: .video), connection.isVideoRotationAngleSupported(90) {
             connection.videoRotationAngle = 90

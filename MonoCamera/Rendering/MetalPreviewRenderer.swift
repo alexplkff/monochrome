@@ -27,6 +27,13 @@ final class MetalPreviewRenderer: NSObject, MTKViewDelegate, @unchecked Sendable
         lock.unlock()
     }
 
+    func clear() {
+        lock.lock()
+        latestBuffer = nil
+        generation &+= 1
+        lock.unlock()
+    }
+
     func update(parameters: FilterParameters, compare: Bool) {
         lock.lock()
         self.parameters = parameters
