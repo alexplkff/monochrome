@@ -44,7 +44,7 @@ final class CameraViewModel: ObservableObject {
             Task { @MainActor in
                 guard let self else { return }
                 self.exposureRange = range
-                self.updateExposure(self.exposureBias)
+                self.exposureBias = min(range.upperBound, max(range.lowerBound, self.exposureBias))
             }
         }
         self.controller?.onLensesAvailable = { [weak self] lenses, selected in
@@ -179,17 +179,13 @@ final class CameraViewModel: ObservableObject {
         guard cameraReady, !isCapturing, !isSwitchingLens, availableLenses.contains(lens),
               let controller else { return }
         isSwitchingLens = true
-        controller.switchLens(to: lens) { [weak self] error in
+        controller.switchLens(to: lens, exposureBias: exposureBias) { [weak self] error in
             guard let self else { return }
             self.isSwitchingLens = false
             if let error {
                 self.show(error)
             } else {
                 self.selectedLens = lens
-                self.focusRequest += 1
-                self.focusIndicatorPoint = nil
-                self.focusLocked = false
-                controller.setExposureBias(self.exposureBias)
             }
         }
     }

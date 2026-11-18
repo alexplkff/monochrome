@@ -156,7 +156,7 @@ struct CameraView: View {
             Slider(value: Binding(get: { model.exposureBias }, set: { model.updateExposure($0) }),
                    in: model.exposureRange)
                 .tint(.white)
-                .disabled(!model.cameraReady)
+                .disabled(!model.cameraReady || model.isSwitchingLens)
             Text(String(format: "%+.1f", model.exposureBias))
                 .frame(width: 42, alignment: .trailing)
         }

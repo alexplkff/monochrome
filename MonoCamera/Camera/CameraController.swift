@@ -47,6 +47,7 @@ final class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDele
     private var captures: [Int64: PhotoDelegate] = [:]
     private var histogramFrames = 0
     private var exposureLocked = false
+    private var lastFocusPoint: CGPoint?
     private var pendingExposureRelock: DispatchWorkItem?
     private var observers: [NSObjectProtocol] = []
     var onStateChange: ((Bool) -> Void)?
@@ -93,6 +94,7 @@ final class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDele
         sessionQueue.async {
             self.wantsRunning = false
             self.exposureLocked = false
+            self.lastFocusPoint = nil
             self.pendingExposureRelock?.cancel()
             self.pendingExposureRelock = nil
             if self.session.isRunning { self.session.stopRunning() }
@@ -123,6 +125,7 @@ final class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDele
                 self.pendingExposureRelock?.cancel()
                 self.pendingExposureRelock = nil
                 self.exposureLocked = lock
+                self.lastFocusPoint = point
                 DispatchQueue.main.async { completion(nil) }
             } catch {
                 DispatchQueue.main.async { completion(error) }
@@ -217,7 +220,8 @@ final class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDele
         }
     }
 
-    func switchLens(to lens: CameraLens, completion: @escaping (Error?) -> Void) {
+    func switchLens(to lens: CameraLens, exposureBias: Float,
+                    completion: @escaping (Error?) -> Void) {
         sessionQueue.async {
             guard self.captures.isEmpty,
                   let device = self.devicesByLens[lens],
@@ -231,7 +235,10 @@ final class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDele
             }
             do {
                 let newInput = try AVCaptureDeviceInput(device: device)
-                let range = try self.configureAutomaticFocusAndExposure(for: device)
+                _ = try self.configureCameraControls(
+                    for: device, exposureBias: exposureBias,
+                    point: self.lastFocusPoint, lock: self.exposureLocked
+                )
                 self.session.beginConfiguration()
                 self.session.removeInput(previousInput)
                 guard self.session.canAddInput(newInput) else {
@@ -241,9 +248,25 @@ final class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDele
                 }
                 self.session.addInput(newInput)
                 self.session.commitConfiguration()
+                let range: ClosedRange<Float>
+                do {
+                    // The session may choose a new active format when it attaches the input.
+                    // Reapply the selected controls to the final format before reporting success.
+                    range = try self.configureCameraControls(
+                        for: device, exposureBias: exposureBias,
+                        point: self.lastFocusPoint, lock: self.exposureLocked
+                    )
+                } catch {
+                    self.session.beginConfiguration()
+                    self.session.removeInput(newInput)
+                    if self.session.canAddInput(previousInput) {
+                        self.session.addInput(previousInput)
+                    }
+                    self.session.commitConfiguration()
+                    throw error
+                }
                 self.pendingExposureRelock?.cancel()
                 self.pendingExposureRelock = nil
-                self.exposureLocked = false
                 self.captureInput = newInput
                 self.captureDevice = device
                 self.applyPortraitRotation()
@@ -271,7 +294,8 @@ final class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDele
         let input = try AVCaptureDeviceInput(device: device)
         captureDevice = device
         captureInput = input
-        let range = try configureAutomaticFocusAndExposure(for: device)
+        let range = try configureCameraControls(for: device, exposureBias: 0,
+                                                point: nil, lock: false)
         DispatchQueue.main.async {
             self.onExposureRange?(range)
             self.onLensesAvailable?(CameraLens.allCases.filter { self.devicesByLens[$0] != nil }, .wide)
@@ -293,21 +317,36 @@ final class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDele
         applyPortraitRotation()
     }
 
-    private func configureAutomaticFocusAndExposure(for device: AVCaptureDevice) throws -> ClosedRange<Float> {
-        if device.isExposureModeSupported(.continuousAutoExposure) ||
-            device.isFocusModeSupported(.continuousAutoFocus) {
-            try device.lockForConfiguration()
-            if device.isExposureModeSupported(.continuousAutoExposure) {
-                device.exposureMode = .continuousAutoExposure
-            }
-            if device.isFocusModeSupported(.continuousAutoFocus) {
-                device.focusMode = .continuousAutoFocus
-            }
-            device.unlockForConfiguration()
-        }
+    private func configureCameraControls(for device: AVCaptureDevice, exposureBias: Float,
+                                         point: CGPoint?, lock: Bool) throws -> ClosedRange<Float> {
         let lower = max(-2, device.minExposureTargetBias)
         let upper = min(2, device.maxExposureTargetBias)
-        return lower <= upper ? lower...upper : 0...0
+        let range: ClosedRange<Float> = lower <= upper ? lower...upper : 0...0
+        guard !lock || (point != nil && device.isFocusPointOfInterestSupported &&
+                        device.isExposurePointOfInterestSupported &&
+                        device.isFocusModeSupported(.autoFocus) &&
+                        device.isExposureModeSupported(.autoExpose)) else {
+            throw CameraError.configurationFailed
+        }
+        try device.lockForConfiguration()
+        defer { device.unlockForConfiguration() }
+        device.setExposureTargetBias(min(range.upperBound, max(range.lowerBound, exposureBias)),
+                                     completionHandler: nil)
+        if let point {
+            if device.isFocusPointOfInterestSupported { device.focusPointOfInterest = point }
+            if device.isExposurePointOfInterestSupported { device.exposurePointOfInterest = point }
+        }
+        if point != nil && device.isFocusModeSupported(.autoFocus) {
+            device.focusMode = .autoFocus
+        } else if device.isFocusModeSupported(.continuousAutoFocus) {
+            device.focusMode = .continuousAutoFocus
+        }
+        if lock {
+            device.exposureMode = .autoExpose
+        } else if device.isExposureModeSupported(.continuousAutoExposure) {
+            device.exposureMode = .continuousAutoExposure
+        }
+        return range
     }
 
     private func applyPortraitRotation() {
