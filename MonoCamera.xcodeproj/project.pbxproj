@@ -1,107 +1,439 @@
 // !$*UTF8*$!
 {
 	archiveVersion = 1;
-	classes = {};
+	classes = {
+	};
 	objectVersion = 60;
 	objects = {
 
 /* Begin PBXBuildFile section */
-		B00000000000000000000015 = {isa = PBXBuildFile; fileRef = C00000000000000000000015; };
-		B00000000000000000000014 = {isa = PBXBuildFile; fileRef = C00000000000000000000014; };
-		B00000000000000000000013 = {isa = PBXBuildFile; fileRef = C00000000000000000000013; };
-		B00000000000000000000001 = {isa = PBXBuildFile; fileRef = C00000000000000000000001; };
-		B00000000000000000000002 = {isa = PBXBuildFile; fileRef = C00000000000000000000002; };
-		B00000000000000000000003 = {isa = PBXBuildFile; fileRef = C00000000000000000000003; };
-		B00000000000000000000004 = {isa = PBXBuildFile; fileRef = C00000000000000000000004; };
-		B00000000000000000000005 = {isa = PBXBuildFile; fileRef = C00000000000000000000005; };
-		B00000000000000000000006 = {isa = PBXBuildFile; fileRef = C00000000000000000000006; };
-		B00000000000000000000007 = {isa = PBXBuildFile; fileRef = C00000000000000000000007; };
-		B00000000000000000000008 = {isa = PBXBuildFile; fileRef = C00000000000000000000008; };
-		B00000000000000000000009 = {isa = PBXBuildFile; fileRef = C00000000000000000000009; };
-		B00000000000000000000010 = {isa = PBXBuildFile; fileRef = C00000000000000000000010; };
-		B00000000000000000000011 = {isa = PBXBuildFile; fileRef = C00000000000000000000011; };
-		B00000000000000000000012 = {isa = PBXBuildFile; fileRef = C00000000000000000000012; };
+		B00000000000000000000015 /* FilmGrainFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000015 /* FilmGrainFilter.swift */; };
+		B00000000000000000000014 /* PhotoProcessingQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000014 /* PhotoProcessingQueue.swift */; };
+		B00000000000000000000013 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000013 /* Assets.xcassets */; };
+		B00000000000000000000001 /* MonoCameraApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000001 /* MonoCameraApp.swift */; };
+		B00000000000000000000002 /* CameraViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000002 /* CameraViewModel.swift */; };
+		B00000000000000000000003 /* CameraError.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000003 /* CameraError.swift */; };
+		B00000000000000000000004 /* CameraController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000004 /* CameraController.swift */; };
+		B00000000000000000000005 /* FilterParameters.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000005 /* FilterParameters.swift */; };
+		B00000000000000000000006 /* FilterEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000006 /* FilterEngine.swift */; };
+		B00000000000000000000007 /* MetalPreviewRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000007 /* MetalPreviewRenderer.swift */; };
+		B00000000000000000000008 /* CameraPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000008 /* CameraPreviewView.swift */; };
+		B00000000000000000000009 /* PresetRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000009 /* PresetRepository.swift */; };
+		B00000000000000000000010 /* PhotoLibraryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000010 /* PhotoLibraryService.swift */; };
+		B00000000000000000000011 /* CameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000011 /* CameraView.swift */; };
+		B00000000000000000000012 /* MonoCameraTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000012 /* MonoCameraTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		D00000000000000000000004 = {isa = PBXContainerItemProxy; containerPortal = E00000000000000000000001; proxyType = 1; remoteGlobalIDString = E00000000000000000000002; remoteInfo = MonoCamera; };
+		D00000000000000000000004 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E00000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E00000000000000000000002;
+			remoteInfo = MonoCamera;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		C00000000000000000000015 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmGrainFilter.swift; sourceTree = "<group>"; };
-		C00000000000000000000014 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoProcessingQueue.swift; sourceTree = "<group>"; };
-		C00000000000000000000013 = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		C00000000000000000000001 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonoCameraApp.swift; sourceTree = "<group>"; };
-		C00000000000000000000002 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraViewModel.swift; sourceTree = "<group>"; };
-		C00000000000000000000003 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraError.swift; sourceTree = "<group>"; };
-		C00000000000000000000004 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraController.swift; sourceTree = "<group>"; };
-		C00000000000000000000005 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterParameters.swift; sourceTree = "<group>"; };
-		C00000000000000000000006 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterEngine.swift; sourceTree = "<group>"; };
-		C00000000000000000000007 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetalPreviewRenderer.swift; sourceTree = "<group>"; };
-		C00000000000000000000008 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPreviewView.swift; sourceTree = "<group>"; };
-		C00000000000000000000009 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PresetRepository.swift; sourceTree = "<group>"; };
-		C00000000000000000000010 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoLibraryService.swift; sourceTree = "<group>"; };
-		C00000000000000000000011 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraView.swift; sourceTree = "<group>"; };
-		C00000000000000000000012 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonoCameraTests.swift; sourceTree = "<group>"; };
-		C00000000000000000000020 = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MonoCamera.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		C00000000000000000000021 = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MonoCameraTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		C00000000000000000000015 /* FilmGrainFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmGrainFilter.swift; sourceTree = "<group>"; };
+		C00000000000000000000014 /* PhotoProcessingQueue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoProcessingQueue.swift; sourceTree = "<group>"; };
+		C00000000000000000000013 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		C00000000000000000000001 /* MonoCameraApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonoCameraApp.swift; sourceTree = "<group>"; };
+		C00000000000000000000002 /* CameraViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraViewModel.swift; sourceTree = "<group>"; };
+		C00000000000000000000003 /* CameraError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraError.swift; sourceTree = "<group>"; };
+		C00000000000000000000004 /* CameraController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraController.swift; sourceTree = "<group>"; };
+		C00000000000000000000005 /* FilterParameters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterParameters.swift; sourceTree = "<group>"; };
+		C00000000000000000000006 /* FilterEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilterEngine.swift; sourceTree = "<group>"; };
+		C00000000000000000000007 /* MetalPreviewRenderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetalPreviewRenderer.swift; sourceTree = "<group>"; };
+		C00000000000000000000008 /* CameraPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraPreviewView.swift; sourceTree = "<group>"; };
+		C00000000000000000000009 /* PresetRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PresetRepository.swift; sourceTree = "<group>"; };
+		C00000000000000000000010 /* PhotoLibraryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoLibraryService.swift; sourceTree = "<group>"; };
+		C00000000000000000000011 /* CameraView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraView.swift; sourceTree = "<group>"; };
+		C00000000000000000000012 /* MonoCameraTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonoCameraTests.swift; sourceTree = "<group>"; };
+		C00000000000000000000020 /* MonoCamera.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MonoCamera.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C00000000000000000000021 /* MonoCameraTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MonoCameraTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		F00000000000000000000002 = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
-		F00000000000000000000005 = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		F00000000000000000000002 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F00000000000000000000005 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		D00000000000000000000001 = {isa = PBXGroup; children = (D00000000000000000000002, D00000000000000000000003, D00000000000000000000005); sourceTree = "<group>"; };
-		D00000000000000000000002 = {isa = PBXGroup; children = (C00000000000000000000013, D00000000000000000000010, D00000000000000000000011, D00000000000000000000012, D00000000000000000000013, D00000000000000000000014, D00000000000000000000015, D00000000000000000000016); path = MonoCamera; sourceTree = "<group>"; };
-		D00000000000000000000003 = {isa = PBXGroup; children = (C00000000000000000000012); path = MonoCameraTests; sourceTree = "<group>"; };
-		D00000000000000000000005 = {isa = PBXGroup; children = (C00000000000000000000020, C00000000000000000000021); name = Products; sourceTree = "<group>"; };
-		D00000000000000000000010 = {isa = PBXGroup; children = (C00000000000000000000001, C00000000000000000000002); path = App; sourceTree = "<group>"; };
-		D00000000000000000000011 = {isa = PBXGroup; children = (C00000000000000000000003, C00000000000000000000004); path = Camera; sourceTree = "<group>"; };
-		D00000000000000000000012 = {isa = PBXGroup; children = (C00000000000000000000005, C00000000000000000000006, C00000000000000000000015); path = Filters; sourceTree = "<group>"; };
-		D00000000000000000000013 = {isa = PBXGroup; children = (C00000000000000000000007, C00000000000000000000008); path = Rendering; sourceTree = "<group>"; };
-		D00000000000000000000014 = {isa = PBXGroup; children = (C00000000000000000000009); path = Presets; sourceTree = "<group>"; };
-		D00000000000000000000015 = {isa = PBXGroup; children = (C00000000000000000000010, C00000000000000000000014); path = Storage; sourceTree = "<group>"; };
-		D00000000000000000000016 = {isa = PBXGroup; children = (C00000000000000000000011); path = Views; sourceTree = "<group>"; };
+		D00000000000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				D00000000000000000000002 /* MonoCamera */,
+				D00000000000000000000003 /* MonoCameraTests */,
+				D00000000000000000000005 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		D00000000000000000000002 /* MonoCamera */ = {
+			isa = PBXGroup;
+			children = (
+				C00000000000000000000013 /* Assets.xcassets */,
+				D00000000000000000000010 /* App */,
+				D00000000000000000000011 /* Camera */,
+				D00000000000000000000012 /* Filters */,
+				D00000000000000000000013 /* Rendering */,
+				D00000000000000000000014 /* Presets */,
+				D00000000000000000000015 /* Storage */,
+				D00000000000000000000016 /* Views */,
+			);
+			path = MonoCamera;
+			sourceTree = "<group>";
+		};
+		D00000000000000000000003 /* MonoCameraTests */ = {
+			isa = PBXGroup;
+			children = (
+				C00000000000000000000012 /* MonoCameraTests.swift */,
+			);
+			path = MonoCameraTests;
+			sourceTree = "<group>";
+		};
+		D00000000000000000000005 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				C00000000000000000000020 /* MonoCamera.app */,
+				C00000000000000000000021 /* MonoCameraTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		D00000000000000000000010 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				C00000000000000000000001 /* MonoCameraApp.swift */,
+				C00000000000000000000002 /* CameraViewModel.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		D00000000000000000000011 /* Camera */ = {
+			isa = PBXGroup;
+			children = (
+				C00000000000000000000003 /* CameraError.swift */,
+				C00000000000000000000004 /* CameraController.swift */,
+			);
+			path = Camera;
+			sourceTree = "<group>";
+		};
+		D00000000000000000000012 /* Filters */ = {
+			isa = PBXGroup;
+			children = (
+				C00000000000000000000015 /* FilmGrainFilter.swift */,
+				C00000000000000000000005 /* FilterParameters.swift */,
+				C00000000000000000000006 /* FilterEngine.swift */,
+			);
+			path = Filters;
+			sourceTree = "<group>";
+		};
+		D00000000000000000000013 /* Rendering */ = {
+			isa = PBXGroup;
+			children = (
+				C00000000000000000000007 /* MetalPreviewRenderer.swift */,
+				C00000000000000000000008 /* CameraPreviewView.swift */,
+			);
+			path = Rendering;
+			sourceTree = "<group>";
+		};
+		D00000000000000000000014 /* Presets */ = {
+			isa = PBXGroup;
+			children = (
+				C00000000000000000000009 /* PresetRepository.swift */,
+			);
+			path = Presets;
+			sourceTree = "<group>";
+		};
+		D00000000000000000000015 /* Storage */ = {
+			isa = PBXGroup;
+			children = (
+				C00000000000000000000014 /* PhotoProcessingQueue.swift */,
+				C00000000000000000000010 /* PhotoLibraryService.swift */,
+			);
+			path = Storage;
+			sourceTree = "<group>";
+		};
+		D00000000000000000000016 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				C00000000000000000000011 /* CameraView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		E00000000000000000000002 = {isa = PBXNativeTarget; buildConfigurationList = G00000000000000000000002; buildPhases = (F00000000000000000000001, F00000000000000000000002, F00000000000000000000006); buildRules = (); dependencies = (); name = MonoCamera; productName = MonoCamera; productReference = C00000000000000000000020; productType = "com.apple.product-type.application"; };
-		E00000000000000000000003 = {isa = PBXNativeTarget; buildConfigurationList = G00000000000000000000003; buildPhases = (F00000000000000000000004, F00000000000000000000005); buildRules = (); dependencies = (D00000000000000000000006); name = MonoCameraTests; productName = MonoCameraTests; productReference = C00000000000000000000021; productType = "com.apple.product-type.bundle.unit-test"; };
+		E00000000000000000000002 /* MonoCamera */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = G00000000000000000000002 /* Build configuration list for PBXNativeTarget "MonoCamera" */;
+			buildPhases = (
+				F00000000000000000000001 /* Sources */,
+				F00000000000000000000002 /* Frameworks */,
+				F00000000000000000000006 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = MonoCamera;
+			productName = MonoCamera;
+			productReference = C00000000000000000000020 /* MonoCamera.app */;
+			productType = "com.apple.product-type.application";
+		};
+		E00000000000000000000003 /* MonoCameraTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = G00000000000000000000003 /* Build configuration list for PBXNativeTarget "MonoCameraTests" */;
+			buildPhases = (
+				F00000000000000000000004 /* Sources */,
+				F00000000000000000000005 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				D00000000000000000000006 /* PBXTargetDependency */,
+			);
+			name = MonoCameraTests;
+			productName = MonoCameraTests;
+			productReference = C00000000000000000000021 /* MonoCameraTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		E00000000000000000000001 = {isa = PBXProject; attributes = {BuildIndependentTargetsInParallel = 1; LastUpgradeCheck = 2630; TargetAttributes = {E00000000000000000000002 = {CreatedOnToolsVersion = 26.3; }; E00000000000000000000003 = {CreatedOnToolsVersion = 26.3; TestTargetID = E00000000000000000000002; }; }; }; buildConfigurationList = G00000000000000000000001; compatibilityVersion = "Xcode 15.0"; developmentRegion = ru; hasScannedForEncodings = 0; knownRegions = (ru, Base); mainGroup = D00000000000000000000001; productRefGroup = D00000000000000000000005; projectDirPath = ""; projectRoot = ""; targets = (E00000000000000000000002, E00000000000000000000003); };
+		E00000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastUpgradeCheck = 2630;
+				TargetAttributes = {
+					E00000000000000000000002 = {
+						CreatedOnToolsVersion = 26.3;
+					};
+					E00000000000000000000003 = {
+						CreatedOnToolsVersion = 26.3;
+						TestTargetID = E00000000000000000000002;
+					};
+				};
+			};
+			buildConfigurationList = G00000000000000000000001 /* Build configuration list for PBXProject "MonoCamera" */;
+			compatibilityVersion = "Xcode 15.0";
+			developmentRegion = ru;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				ru,
+				Base,
+			);
+			mainGroup = D00000000000000000000001;
+			productRefGroup = D00000000000000000000005 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				E00000000000000000000002 /* MonoCamera */,
+				E00000000000000000000003 /* MonoCameraTests */,
+			);
+		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		F00000000000000000000006 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (B00000000000000000000013); runOnlyForDeploymentPostprocessing = 0; };
+		F00000000000000000000006 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B00000000000000000000013 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		F00000000000000000000001 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (B00000000000000000000015, B00000000000000000000014, B00000000000000000000001, B00000000000000000000002, B00000000000000000000003, B00000000000000000000004, B00000000000000000000005, B00000000000000000000006, B00000000000000000000007, B00000000000000000000008, B00000000000000000000009, B00000000000000000000010, B00000000000000000000011); runOnlyForDeploymentPostprocessing = 0; };
-		F00000000000000000000004 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (B00000000000000000000012); runOnlyForDeploymentPostprocessing = 0; };
+		F00000000000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B00000000000000000000015 /* FilmGrainFilter.swift in Sources */,
+				B00000000000000000000014 /* PhotoProcessingQueue.swift in Sources */,
+				B00000000000000000000001 /* MonoCameraApp.swift in Sources */,
+				B00000000000000000000002 /* CameraViewModel.swift in Sources */,
+				B00000000000000000000003 /* CameraError.swift in Sources */,
+				B00000000000000000000004 /* CameraController.swift in Sources */,
+				B00000000000000000000005 /* FilterParameters.swift in Sources */,
+				B00000000000000000000006 /* FilterEngine.swift in Sources */,
+				B00000000000000000000007 /* MetalPreviewRenderer.swift in Sources */,
+				B00000000000000000000008 /* CameraPreviewView.swift in Sources */,
+				B00000000000000000000009 /* PresetRepository.swift in Sources */,
+				B00000000000000000000010 /* PhotoLibraryService.swift in Sources */,
+				B00000000000000000000011 /* CameraView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F00000000000000000000004 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				B00000000000000000000012 /* MonoCameraTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		D00000000000000000000006 = {isa = PBXTargetDependency; target = E00000000000000000000002; targetProxy = D00000000000000000000004; };
+		D00000000000000000000006 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E00000000000000000000002 /* MonoCamera */;
+			targetProxy = D00000000000000000000004 /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		G00000000000000000000010 = {isa = XCBuildConfiguration; buildSettings = {ALWAYS_SEARCH_USER_PATHS = NO; CLANG_ENABLE_MODULES = YES; CLANG_ENABLE_OBJC_ARC = YES; IPHONEOS_DEPLOYMENT_TARGET = 26.0; SDKROOT = iphoneos; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = 1; }; name = Debug; };
-		G00000000000000000000011 = {isa = XCBuildConfiguration; buildSettings = {ALWAYS_SEARCH_USER_PATHS = NO; CLANG_ENABLE_MODULES = YES; CLANG_ENABLE_OBJC_ARC = YES; IPHONEOS_DEPLOYMENT_TARGET = 26.0; SDKROOT = iphoneos; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = 1; }; name = Release; };
-		G00000000000000000000020 = {isa = XCBuildConfiguration; buildSettings = {ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; CODE_SIGN_STYLE = Automatic; ENABLE_TESTABILITY = YES; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = MonoCamera/Info.plist; LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks"); PRODUCT_BUNDLE_IDENTIFIER = com.alexanderpolyakov.MonoCamera; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_STRICT_CONCURRENCY = targeted; SWIFT_VERSION = 5.0; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; }; name = Debug; };
-		G00000000000000000000021 = {isa = XCBuildConfiguration; buildSettings = {ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; CODE_SIGN_STYLE = Automatic; GENERATE_INFOPLIST_FILE = NO; INFOPLIST_FILE = MonoCamera/Info.plist; LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks"); PRODUCT_BUNDLE_IDENTIFIER = com.alexanderpolyakov.MonoCamera; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_STRICT_CONCURRENCY = targeted; SWIFT_VERSION = 5.0; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; }; name = Release; };
-		G00000000000000000000030 = {isa = XCBuildConfiguration; buildSettings = {BUNDLE_LOADER = "$(TEST_HOST)"; CODE_SIGN_STYLE = Automatic; GENERATE_INFOPLIST_FILE = YES; LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks", "@loader_path/Frameworks"); PRODUCT_BUNDLE_IDENTIFIER = com.alexanderpolyakov.MonoCameraTests; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_VERSION = 5.0; TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MonoCamera.app/MonoCamera"; }; name = Debug; };
-		G00000000000000000000031 = {isa = XCBuildConfiguration; buildSettings = {BUNDLE_LOADER = "$(TEST_HOST)"; CODE_SIGN_STYLE = Automatic; GENERATE_INFOPLIST_FILE = YES; LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/Frameworks", "@loader_path/Frameworks"); PRODUCT_BUNDLE_IDENTIFIER = com.alexanderpolyakov.MonoCameraTests; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_VERSION = 5.0; TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MonoCamera.app/MonoCamera"; }; name = Release; };
+		G00000000000000000000010 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		G00000000000000000000011 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		G00000000000000000000020 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 35T8QD6VQW;
+				ENABLE_TESTABILITY = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = MonoCamera/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.alexanderpolyakov.MonoCamera;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_STRICT_CONCURRENCY = targeted;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		G00000000000000000000021 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 35T8QD6VQW;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = MonoCamera/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.alexanderpolyakov.MonoCamera;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_STRICT_CONCURRENCY = targeted;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		G00000000000000000000030 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.alexanderpolyakov.MonoCameraTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MonoCamera.app/MonoCamera";
+			};
+			name = Debug;
+		};
+		G00000000000000000000031 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.alexanderpolyakov.MonoCameraTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MonoCamera.app/MonoCamera";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		G00000000000000000000001 = {isa = XCConfigurationList; buildConfigurations = (G00000000000000000000010, G00000000000000000000011); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
-		G00000000000000000000002 = {isa = XCConfigurationList; buildConfigurations = (G00000000000000000000020, G00000000000000000000021); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
-		G00000000000000000000003 = {isa = XCConfigurationList; buildConfigurations = (G00000000000000000000030, G00000000000000000000031); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		G00000000000000000000001 /* Build configuration list for PBXProject "MonoCamera" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				G00000000000000000000010 /* Debug */,
+				G00000000000000000000011 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		G00000000000000000000002 /* Build configuration list for PBXNativeTarget "MonoCamera" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				G00000000000000000000020 /* Debug */,
+				G00000000000000000000021 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		G00000000000000000000003 /* Build configuration list for PBXNativeTarget "MonoCameraTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				G00000000000000000000030 /* Debug */,
+				G00000000000000000000031 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
 	};
-	rootObject = E00000000000000000000001;
+	rootObject = E00000000000000000000001 /* Project object */;
 }
