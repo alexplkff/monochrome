@@ -8,6 +8,7 @@ import UniformTypeIdentifiers
 final class FilterEngine: @unchecked Sendable {
     let colorSpace = CGColorSpace(name: CGColorSpace.sRGB)!
     let context: CIContext
+    let supportsGrain: Bool
     private let cubeLock = NSLock()
     private var cachedParameters: FilterParameters?
     private var cachedCube: Data?
@@ -18,9 +19,17 @@ final class FilterEngine: @unchecked Sendable {
             .outputColorSpace: colorSpace,
             .cacheIntermediates: false
         ])
+        do {
+            try FilmGrainFilter.prepare(device: metalDevice)
+            supportsGrain = true
+        } catch {
+            supportsGrain = false
+            NSLog("Film grain pipeline failed: %@", String(describing: error))
+        }
     }
 
-    func apply(_ image: CIImage, parameters: FilterParameters, compare: Bool = false) -> CIImage {
+    func apply(_ image: CIImage, parameters: FilterParameters, compare: Bool = false,
+               includesGrain: Bool = true, grainSeed: UInt32 = 713_021) -> CIImage {
         if compare { return image }
         let monochrome: CIImage
         if parameters.hasLevels {
@@ -38,12 +47,16 @@ final class FilterEngine: @unchecked Sendable {
             ])
         }
         // UI contrast -100...100 maps linearly to Core Image contrast 0...2.
-        return monochrome.applyingFilter("CIColorControls", parameters: [
+        let toned = monochrome.applyingFilter("CIColorControls", parameters: [
             kCIInputContrastKey: 1 + parameters.safeContrast / 100
         ])
+        guard includesGrain, parameters.grain.safeStrength > 0, supportsGrain else { return toned }
+        return (try? FilmGrainFilter.apply(to: toned, settings: parameters.grain, seed: grainSeed)) ?? toned
     }
 
     private func cubeData(for parameters: FilterParameters) -> Data {
+        var parameters = parameters
+        parameters.grain = .initial // Grain edits must not rebuild the tone lookup table.
         cubeLock.lock()
         defer { cubeLock.unlock() }
         if cachedParameters == parameters, let cachedCube { return cachedCube }
@@ -77,11 +90,16 @@ final class FilterEngine: @unchecked Sendable {
         return data
     }
 
-    func jpeg(from data: Data, parameters: FilterParameters) throws -> Data {
+    func jpeg(from data: Data, parameters: FilterParameters, grainSeed: UInt32 = 713_021) throws -> Data {
+        if parameters.grain.safeStrength > 0 && !supportsGrain {
+            throw CameraError.photoProcessingFailed
+        }
         guard let image = CIImage(data: data, options: [.applyOrientationProperty: true]) else {
             throw CameraError.invalidPhoto
         }
-        let result = apply(image, parameters: parameters)
+        // An enabled effect must never silently disappear from a saved photograph.
+        let toned = apply(image, parameters: parameters, includesGrain: false)
+        let result = try FilmGrainFilter.apply(to: toned, settings: parameters.grain, seed: grainSeed)
         var properties = image.properties
         // Pixel orientation has already been applied, so the output metadata must say upright.
         properties[kCGImagePropertyOrientation as String] = 1

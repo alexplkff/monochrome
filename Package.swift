@@ -10,7 +10,7 @@ let package = Package(
         .target(name: "MonoCameraCore", path: "MonoCamera",
                 exclude: ["App", "Rendering", "Storage/PhotoLibraryService.swift", "Views", "Info.plist",
                           "Assets.xcassets", "Camera/CameraController.swift"],
-                sources: ["Filters/FilterParameters.swift", "Filters/FilterEngine.swift",
+                sources: ["Filters/FilterParameters.swift", "Filters/FilterEngine.swift", "Filters/FilmGrainFilter.swift",
                           "Presets/PresetRepository.swift", "Camera/CameraError.swift",
                           "Storage/PhotoProcessingQueue.swift"]),
         .testTarget(name: "MonoCameraCoreTests", dependencies: ["MonoCameraCore"],

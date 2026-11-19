@@ -22,6 +22,7 @@ final class CameraViewModel: ObservableObject {
     @Published private(set) var histogram = Array(repeating: Array(repeating: Float(0), count: 64), count: 4)
     @Published private(set) var focusIndicatorPoint: CGPoint?
     @Published private(set) var focusLocked = false
+    @Published private(set) var grainPreviewEnabled = false
 
     let renderer: MetalPreviewRenderer?
     private let controller: CameraController?
@@ -181,6 +182,30 @@ final class CameraViewModel: ObservableObject {
         publishPreview()
     }
 
+    func updateGrainBrand(_ brand: GrainBrand) {
+        draft.grain.brand = brand
+        publishPreview()
+    }
+
+    func updateGrainISO(_ value: Float) {
+        draft.grain.iso = value.isFinite ? min(3200, max(50, value)) : 400
+        publishPreview()
+    }
+
+    func updateGrainStrength(_ value: Float) {
+        if value > 0 && renderer?.engine.supportsGrain != true {
+            show(CameraError.photoProcessingFailed)
+            return
+        }
+        draft.grain.strength = value.isFinite ? min(100, max(0, value)) : 0
+        publishPreview()
+    }
+
+    func setGrainPreview(_ enabled: Bool) {
+        grainPreviewEnabled = enabled
+        publishPreview()
+    }
+
     func updateLevels(_ channel: LevelChannel, handle: Int, value: Float) {
         var levels = draft.levels(for: channel)
         levels.set(handle, to: value)
@@ -226,7 +251,7 @@ final class CameraViewModel: ObservableObject {
     }
 
     func compare(_ pressed: Bool) {
-        renderer?.update(parameters: draft, compare: pressed)
+        renderer?.update(parameters: draft, compare: pressed, showsGrain: grainPreviewEnabled)
     }
 
     func shutter() {
@@ -270,7 +295,7 @@ final class CameraViewModel: ObservableObject {
     }
 
     private func publishPreview() {
-        renderer?.update(parameters: draft, compare: false)
+        renderer?.update(parameters: draft, compare: false, showsGrain: grainPreviewEnabled)
     }
 
     private func show(_ error: Error) {

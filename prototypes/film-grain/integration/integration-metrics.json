@@ -1,0 +1,153 @@
+{
+  "device" : "Apple M3 Pro",
+  "export24MPBytes" : 2725210,
+  "export24MPSecondsMac" : 0.15184903144836426,
+  "exportHeight" : 5712,
+  "exportWidth" : 4284,
+  "records" : [
+    {
+      "image" : "portrait-kodak-50-100",
+      "linearSRGBMeanShift" : 0.0019796465993650947,
+      "maxTonalBinMeanShift8Bit" : 0.14809197852194941,
+      "meanShift8Bit" : -0.029118670164233577,
+      "renderSecondsMac" : 0.0052000284194946289,
+      "rms8Bit" : 11.39003584593236
+    },
+    {
+      "image" : "portrait-kodak-400-100",
+      "linearSRGBMeanShift" : 0.0020485592878852375,
+      "maxTonalBinMeanShift8Bit" : 0.05872556118754526,
+      "meanShift8Bit" : -0.016487511405109487,
+      "renderSecondsMac" : 0.0038470029830932617,
+      "rms8Bit" : 11.395607723995189
+    },
+    {
+      "image" : "portrait-kodak-3200-100",
+      "linearSRGBMeanShift" : 0.0020151260133007406,
+      "maxTonalBinMeanShift8Bit" : 0.13586311351262845,
+      "meanShift8Bit" : -0.021807994981751826,
+      "renderSecondsMac" : 0.0027279853820800781,
+      "rms8Bit" : 11.385471274714719
+    },
+    {
+      "image" : "portrait-ilford-50-100",
+      "linearSRGBMeanShift" : 0.0019485881762202266,
+      "maxTonalBinMeanShift8Bit" : 0.15489786728887797,
+      "meanShift8Bit" : -0.036352360857664232,
+      "renderSecondsMac" : 0.0038189888000488281,
+      "rms8Bit" : 11.40540880309797
+    },
+    {
+      "image" : "portrait-ilford-400-100",
+      "linearSRGBMeanShift" : 0.0020032680660680394,
+      "maxTonalBinMeanShift8Bit" : 0.15489786728887797,
+      "meanShift8Bit" : -0.027308109032846715,
+      "renderSecondsMac" : 0.0044419765472412109,
+      "rms8Bit" : 11.433200462758627
+    },
+    {
+      "image" : "portrait-ilford-3200-100",
+      "linearSRGBMeanShift" : 0.0019363749657738431,
+      "maxTonalBinMeanShift8Bit" : 0.15407916820172746,
+      "meanShift8Bit" : -0.033220232664233573,
+      "renderSecondsMac" : 0.0031330585479736328,
+      "rms8Bit" : 11.327242430381824
+    },
+    {
+      "image" : "portrait-fujifilm-50-100",
+      "linearSRGBMeanShift" : 0.0020047530348772887,
+      "maxTonalBinMeanShift8Bit" : 0.1465880715543002,
+      "meanShift8Bit" : -0.025322194343065693,
+      "renderSecondsMac" : 0.0018450021743774414,
+      "rms8Bit" : 11.416799878123326
+    },
+    {
+      "image" : "portrait-fujifilm-400-100",
+      "linearSRGBMeanShift" : 0.0019854637922039121,
+      "maxTonalBinMeanShift8Bit" : 0.14616220130340332,
+      "meanShift8Bit" : -0.031033302919708031,
+      "renderSecondsMac" : 0.0020099878311157227,
+      "rms8Bit" : 11.441163258038069
+    },
+    {
+      "image" : "portrait-fujifilm-3200-100",
+      "linearSRGBMeanShift" : 0.0019723660214491416,
+      "maxTonalBinMeanShift8Bit" : 0.097515040544075338,
+      "meanShift8Bit" : -0.026082059762773724,
+      "renderSecondsMac" : 0.002283930778503418,
+      "rms8Bit" : 11.33982206632424
+    },
+    {
+      "image" : "landscape-kodak-50-100",
+      "linearSRGBMeanShift" : 0.0013176396826823115,
+      "maxTonalBinMeanShift8Bit" : 0.14346621189511832,
+      "meanShift8Bit" : -0.015549659729003906,
+      "renderSecondsMac" : 0.0049610137939453125,
+      "rms8Bit" : 10.084032465339643
+    },
+    {
+      "image" : "landscape-kodak-400-100",
+      "linearSRGBMeanShift" : 0.0013287149874641553,
+      "maxTonalBinMeanShift8Bit" : 0.14851301115241636,
+      "meanShift8Bit" : -0.010636329650878906,
+      "renderSecondsMac" : 0.0065649747848510742,
+      "rms8Bit" : 10.086602056875842
+    },
+    {
+      "image" : "landscape-kodak-3200-100",
+      "linearSRGBMeanShift" : 0.0013220894994033659,
+      "maxTonalBinMeanShift8Bit" : 0.13632487742485611,
+      "meanShift8Bit" : -0.01325225830078125,
+      "renderSecondsMac" : 0.0039730072021484375,
+      "rms8Bit" : 10.070490821461078
+    },
+    {
+      "image" : "landscape-ilford-50-100",
+      "linearSRGBMeanShift" : 0.0013274359251217768,
+      "maxTonalBinMeanShift8Bit" : 0.13930931571093583,
+      "meanShift8Bit" : -0.0090818405151367188,
+      "renderSecondsMac" : 0.0027519464492797852,
+      "rms8Bit" : 10.099844920034785
+    },
+    {
+      "image" : "landscape-ilford-400-100",
+      "linearSRGBMeanShift" : 0.001319240398528224,
+      "maxTonalBinMeanShift8Bit" : 0.14832361516034986,
+      "meanShift8Bit" : -0.010028839111328125,
+      "renderSecondsMac" : 0.0061990022659301758,
+      "rms8Bit" : 10.082613727543936
+    },
+    {
+      "image" : "landscape-ilford-3200-100",
+      "linearSRGBMeanShift" : 0.001316721510211924,
+      "maxTonalBinMeanShift8Bit" : 0.099854227405247811,
+      "meanShift8Bit" : -0.014993667602539062,
+      "renderSecondsMac" : 0.0034259557723999023,
+      "rms8Bit" : 10.057875144992156
+    },
+    {
+      "image" : "landscape-fujifilm-50-100",
+      "linearSRGBMeanShift" : 0.0013247342968240392,
+      "maxTonalBinMeanShift8Bit" : 0.15082072052867193,
+      "meanShift8Bit" : -0.011994361877441406,
+      "renderSecondsMac" : 0.0024989843368530273,
+      "rms8Bit" : 10.109251089383219
+    },
+    {
+      "image" : "landscape-fujifilm-400-100",
+      "linearSRGBMeanShift" : 0.0013193282049827728,
+      "maxTonalBinMeanShift8Bit" : 0.11188046647230321,
+      "meanShift8Bit" : -0.014241218566894531,
+      "renderSecondsMac" : 0.0030989646911621094,
+      "rms8Bit" : 10.08674217695911
+    },
+    {
+      "image" : "landscape-fujifilm-3200-100",
+      "linearSRGBMeanShift" : 0.0013255701288710246,
+      "maxTonalBinMeanShift8Bit" : 0.11575357066723513,
+      "meanShift8Bit" : -0.0083675384521484375,
+      "renderSecondsMac" : 0.0035679340362548828,
+      "rms8Bit" : 10.071085519175472
+    }
+  ]
+}

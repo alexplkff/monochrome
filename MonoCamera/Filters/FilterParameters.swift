@@ -1,5 +1,27 @@
 import Foundation
 
+enum GrainBrand: String, Codable, CaseIterable, Identifiable, Sendable {
+    case kodak, ilford, fujifilm
+    var id: String { rawValue }
+    var label: String {
+        switch self {
+        case .kodak: "Kodak"
+        case .ilford: "Ilford"
+        case .fujifilm: "Fujifilm"
+        }
+    }
+    var index: Float { Float(Self.allCases.firstIndex(of: self)!) }
+}
+
+struct GrainSettings: Codable, Equatable, Sendable {
+    var brand: GrainBrand = .kodak
+    var iso: Float = 400
+    var strength: Float = 0
+    static let initial = GrainSettings()
+    var safeISO: Float { iso.isFinite ? min(3200, max(50, iso)) : 400 }
+    var safeStrength: Float { strength.isFinite ? min(100, max(0, strength)) : 0 }
+}
+
 enum LevelChannel: Int, CaseIterable, Identifiable {
     case master, red, green, blue
     var id: Int { rawValue }
@@ -66,15 +88,18 @@ struct FilterParameters: Codable, Equatable, Sendable {
     var redLevels: LevelAdjustment = .identity
     var greenLevels: LevelAdjustment = .identity
     var blueLevels: LevelAdjustment = .identity
+    var grain: GrainSettings = .initial
 
     private enum CodingKeys: String, CodingKey {
         case redWeight, greenWeight, blueWeight, contrast
         case masterLevels, redLevels, greenLevels, blueLevels
+        case grain
     }
 
     init(redWeight: Float, greenWeight: Float, blueWeight: Float, contrast: Float,
          masterLevels: LevelAdjustment = .identity, redLevels: LevelAdjustment = .identity,
-         greenLevels: LevelAdjustment = .identity, blueLevels: LevelAdjustment = .identity) {
+         greenLevels: LevelAdjustment = .identity, blueLevels: LevelAdjustment = .identity,
+         grain: GrainSettings = .initial) {
         self.redWeight = redWeight
         self.greenWeight = greenWeight
         self.blueWeight = blueWeight
@@ -83,6 +108,7 @@ struct FilterParameters: Codable, Equatable, Sendable {
         self.redLevels = redLevels
         self.greenLevels = greenLevels
         self.blueLevels = blueLevels
+        self.grain = grain
     }
 
     init(from decoder: Decoder) throws {
@@ -95,6 +121,7 @@ struct FilterParameters: Codable, Equatable, Sendable {
         redLevels = try container.decodeIfPresent(LevelAdjustment.self, forKey: .redLevels) ?? .identity
         greenLevels = try container.decodeIfPresent(LevelAdjustment.self, forKey: .greenLevels) ?? .identity
         blueLevels = try container.decodeIfPresent(LevelAdjustment.self, forKey: .blueLevels) ?? .identity
+        grain = try container.decodeIfPresent(GrainSettings.self, forKey: .grain) ?? .initial
     }
 
     func levels(for channel: LevelChannel) -> LevelAdjustment {

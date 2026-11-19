@@ -7,7 +7,7 @@ enum PhotoLibraryService {
         guard await requestAddPermission() else { return .failed(.libraryPermissionDenied) }
         // Release full-size Core Image / ImageIO temporaries before awaiting PhotoKit.
         let monochrome = autoreleasepool {
-            try? engine.jpeg(from: job.original, parameters: job.parameters)
+            try? engine.jpeg(from: job.original, parameters: job.parameters, grainSeed: job.grainSeed)
         }
         let originalType: UTType = job.original.starts(with: [0xFF, 0xD8]) ? .jpeg : .heic
         // Separate changes retain the successful asset if its partner fails.

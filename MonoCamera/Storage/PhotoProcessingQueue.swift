@@ -3,6 +3,13 @@ import Foundation
 struct PhotoProcessingJob: Sendable {
     let original: Data
     let parameters: FilterParameters
+    let grainSeed: UInt32
+
+    init(original: Data, parameters: FilterParameters, grainSeed: UInt32 = UInt32.random(in: 0...0x00FF_FFFF)) {
+        self.original = original
+        self.parameters = parameters
+        self.grainSeed = grainSeed
+    }
 }
 
 enum PhotoProcessingOutcome: Sendable {

@@ -222,6 +222,8 @@ struct CameraView: View {
             .padding(.bottom, 12)
             ScrollView {
                 VStack(spacing: 12) {
+                    grainControls
+                    Divider().padding(.vertical, 8)
                     HStack {
                         Text("УРОВНИ")
                             .font(.system(size: 12, weight: .semibold, design: .monospaced))
@@ -264,6 +266,59 @@ struct CameraView: View {
         }
         .foregroundStyle(.white)
         .background(Color(white: 0.12))
+    }
+
+    private var grainControls: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("ПЛЁНОЧНОЕ ЗЕРНО")
+                .font(.system(size: 12, weight: .semibold, design: .monospaced))
+            Picker("Марка зерна", selection: Binding(get: { model.draft.grain.brand },
+                                                      set: { model.updateGrainBrand($0) })) {
+                ForEach(GrainBrand.allCases) { brand in
+                    Text(brand.label).tag(brand)
+                }
+            }
+            .pickerStyle(.segmented)
+            HStack {
+                Text("ISO зерна")
+                Spacer()
+                Text(String(Int(model.draft.grain.safeISO.rounded())))
+                    .monospacedDigit()
+            }
+            .font(.system(size: 13, design: .monospaced))
+            Slider(value: Binding(get: { log2(model.draft.grain.safeISO / 50) },
+                                  set: { model.updateGrainISO(50 * pow(2, $0)) }), in: 0...6)
+                .tint(.white)
+                .accessibilityLabel("ISO зерна")
+                .accessibilityValue(String(Int(model.draft.grain.safeISO.rounded())))
+            HStack {
+                ForEach([50, 100, 200, 400, 800, 1600, 3200], id: \.self) { value in
+                    Text(String(value))
+                        .frame(maxWidth: .infinity)
+                }
+            }
+            .font(.system(size: 10, design: .monospaced))
+            .foregroundStyle(.white.opacity(0.6))
+            HStack {
+                Text("Сила")
+                Spacer()
+                Text("\(Int(model.draft.grain.safeStrength.rounded()))%")
+                    .monospacedDigit()
+            }
+            .font(.system(size: 13, design: .monospaced))
+            Slider(value: Binding(get: { model.draft.grain.safeStrength },
+                                  set: { model.updateGrainStrength($0) }), in: 0...100)
+                .tint(.white)
+                .accessibilityLabel("Сила зерна")
+            Toggle("Предпросмотр зерна", isOn: Binding(get: { model.grainPreviewEnabled },
+                                                       set: { model.setGrainPreview($0) }))
+                .font(.system(size: 13))
+                .tint(.white)
+            Text("При силе выше 0% зерно сохраняется на фото, даже если предпросмотр выключен.")
+                .font(.system(size: 11))
+                .foregroundStyle(.white.opacity(0.6))
+                .fixedSize(horizontal: false, vertical: true)
+        }
     }
 
     private var channelPicker: some View {

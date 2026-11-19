@@ -6,6 +6,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B00000000000000000000015 = {isa = PBXBuildFile; fileRef = C00000000000000000000015; };
 		B00000000000000000000014 = {isa = PBXBuildFile; fileRef = C00000000000000000000014; };
 		B00000000000000000000013 = {isa = PBXBuildFile; fileRef = C00000000000000000000013; };
 		B00000000000000000000001 = {isa = PBXBuildFile; fileRef = C00000000000000000000001; };
@@ -27,6 +28,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		C00000000000000000000015 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmGrainFilter.swift; sourceTree = "<group>"; };
 		C00000000000000000000014 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoProcessingQueue.swift; sourceTree = "<group>"; };
 		C00000000000000000000013 = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C00000000000000000000001 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonoCameraApp.swift; sourceTree = "<group>"; };
@@ -57,7 +59,7 @@
 		D00000000000000000000005 = {isa = PBXGroup; children = (C00000000000000000000020, C00000000000000000000021); name = Products; sourceTree = "<group>"; };
 		D00000000000000000000010 = {isa = PBXGroup; children = (C00000000000000000000001, C00000000000000000000002); path = App; sourceTree = "<group>"; };
 		D00000000000000000000011 = {isa = PBXGroup; children = (C00000000000000000000003, C00000000000000000000004); path = Camera; sourceTree = "<group>"; };
-		D00000000000000000000012 = {isa = PBXGroup; children = (C00000000000000000000005, C00000000000000000000006); path = Filters; sourceTree = "<group>"; };
+		D00000000000000000000012 = {isa = PBXGroup; children = (C00000000000000000000005, C00000000000000000000006, C00000000000000000000015); path = Filters; sourceTree = "<group>"; };
 		D00000000000000000000013 = {isa = PBXGroup; children = (C00000000000000000000007, C00000000000000000000008); path = Rendering; sourceTree = "<group>"; };
 		D00000000000000000000014 = {isa = PBXGroup; children = (C00000000000000000000009); path = Presets; sourceTree = "<group>"; };
 		D00000000000000000000015 = {isa = PBXGroup; children = (C00000000000000000000010, C00000000000000000000014); path = Storage; sourceTree = "<group>"; };
@@ -78,7 +80,7 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		F00000000000000000000001 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (B00000000000000000000014, B00000000000000000000001, B00000000000000000000002, B00000000000000000000003, B00000000000000000000004, B00000000000000000000005, B00000000000000000000006, B00000000000000000000007, B00000000000000000000008, B00000000000000000000009, B00000000000000000000010, B00000000000000000000011); runOnlyForDeploymentPostprocessing = 0; };
+		F00000000000000000000001 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (B00000000000000000000015, B00000000000000000000014, B00000000000000000000001, B00000000000000000000002, B00000000000000000000003, B00000000000000000000004, B00000000000000000000005, B00000000000000000000006, B00000000000000000000007, B00000000000000000000008, B00000000000000000000009, B00000000000000000000010, B00000000000000000000011); runOnlyForDeploymentPostprocessing = 0; };
 		F00000000000000000000004 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (B00000000000000000000012); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXSourcesBuildPhase section */
 

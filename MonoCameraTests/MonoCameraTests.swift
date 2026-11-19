@@ -72,6 +72,7 @@ final class MonoCameraTests: XCTestCase, @unchecked Sendable {
         let oldJSON = #"{"redWeight":0.2126,"greenWeight":0.7152,"blueWeight":0.0722,"contrast":0}"#
         var parameters = try JSONDecoder().decode(FilterParameters.self, from: Data(oldJSON.utf8))
         XCTAssertFalse(parameters.hasLevels)
+        XCTAssertEqual(parameters.grain, .initial)
         var levels = parameters.masterLevels
         levels.set(1, to: 0.25)
         parameters.masterLevels = levels
@@ -127,6 +128,8 @@ final class MonoCameraTests: XCTestCase, @unchecked Sendable {
             XCTAssertTrue(queue.state.isCapturing)
             XCTAssertNil(queue.beginCapture(), "Only one AVFoundation capture may be in flight")
             parameters.contrast = Float(index * 10)
+            parameters.grain = GrainSettings(brand: GrainBrand.allCases[index - 1],
+                                              iso: Float(index * 400), strength: Float(index * 20))
             queue.finishCapture(reservation, original: Data([UInt8(index)]), parameters: parameters)
             XCTAssertFalse(queue.state.isCapturing, "PhotoKit must not keep the camera busy")
             if index < 3 { XCTAssertTrue(queue.state.canCapture, "Save is still suspended") }
@@ -143,6 +146,8 @@ final class MonoCameraTests: XCTestCase, @unchecked Sendable {
         await fulfillment(of: [drained], timeout: 3)
         let jobs = await processor.startedJobs
         XCTAssertEqual(jobs.map(\.parameters.contrast), [10, 20, 30])
+        XCTAssertEqual(jobs.map(\.parameters.grain.strength), [20, 40, 60])
+        XCTAssertEqual(jobs.map(\.parameters.grain.brand), [.kodak, .ilford, .fujifilm])
         XCTAssertEqual(jobs.map { Array($0.original) }, [[1], [2], [3]])
         let peak = await processor.peakConcurrentJobs
         XCTAssertEqual(peak, 1)
@@ -192,6 +197,129 @@ final class MonoCameraTests: XCTestCase, @unchecked Sendable {
         await processor.completeFirst(.saved)
         await fulfillment(of: [drained], timeout: 3)
         XCTAssertTrue(queue.state.canCapture)
+    }
+
+    func testGrainSettingsPersistPerProfileAndNewProfilesKeepFactoryDefaults() throws {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: url) }
+        let repository = PresetRepository(url: url)
+        var aa = repository.selected.parameters
+        aa.grain = GrainSettings(brand: .fujifilm, iso: 1600, strength: 70)
+        repository.save(aa, for: 0)
+        let created = try XCTUnwrap(repository.create())
+        XCTAssertEqual(created.parameters.grain, .initial)
+        var first = created.parameters
+        first.grain = GrainSettings(brand: .ilford, iso: 800, strength: 35)
+        repository.save(first, for: 1)
+        let reopened = PresetRepository(url: url)
+        XCTAssertEqual(reopened.selected.parameters.grain, first.grain)
+        XCTAssertTrue(reopened.select(0))
+        XCTAssertEqual(reopened.selected.parameters.grain, aa.grain)
+        XCTAssertEqual(reopened.create()?.parameters.grain, .initial)
+        var invalid = GrainSettings(iso: .infinity, strength: .nan)
+        XCTAssertEqual(invalid.safeISO, 400)
+        XCTAssertEqual(invalid.safeStrength, 0)
+        invalid.iso = 9999; invalid.strength = -50
+        XCTAssertEqual(invalid.safeISO, 3200)
+        XCTAssertEqual(invalid.safeStrength, 0)
+    }
+
+    func testLegacyPresetFileRetainsExistingToneValues() throws {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: url) }
+        let legacy = #"{"version":1,"selectedNumber":3,"presets":[{"number":0,"parameters":{"redWeight":0.2,"greenWeight":0.7,"blueWeight":0.1,"contrast":12}},{"number":3,"parameters":{"redWeight":0.5,"greenWeight":0.3,"blueWeight":0.2,"contrast":40}}]}"#
+        try Data(legacy.utf8).write(to: url)
+        let repository = PresetRepository(url: url)
+        XCTAssertEqual(repository.selected.number, 3)
+        XCTAssertEqual(repository.selected.parameters.contrast, 40)
+        XCTAssertEqual(repository.selected.parameters.redWeight, 0.5)
+        XCTAssertEqual(repository.selected.parameters.grain, .initial)
+    }
+
+    func testGrainBypassPreviewSwitchCompareAndSeed() throws {
+        let engine = try grainEngine()
+        let image = CIImage(color: CIColor(red: 0.5, green: 0.5, blue: 0.5))
+            .cropped(to: CGRect(x: 0, y: 0, width: 384, height: 384))
+        var parameters = FilterParameters.initialAA
+        let baseline = pixels(engine.apply(image, parameters: parameters), engine: engine)
+        parameters.grain.strength = 0
+        XCTAssertEqual(baseline, pixels(engine.apply(image, parameters: parameters), engine: engine))
+        parameters.grain.strength = 50
+        let disabled = pixels(engine.apply(image, parameters: parameters, includesGrain: false), engine: engine)
+        XCTAssertEqual(baseline, disabled)
+        let first = pixels(engine.apply(image, parameters: parameters, grainSeed: 123), engine: engine)
+        XCTAssertNotEqual(baseline, first)
+        XCTAssertEqual(first, pixels(engine.apply(image, parameters: parameters, grainSeed: 123), engine: engine))
+        XCTAssertNotEqual(first, pixels(engine.apply(image, parameters: parameters, grainSeed: 456), engine: engine))
+        let color = CIImage(color: CIColor(red: 0.8, green: 0.2, blue: 0.1)).cropped(to: image.extent)
+        XCTAssertEqual(pixels(color, engine: engine),
+                       pixels(engine.apply(color, parameters: parameters, compare: true), engine: engine))
+    }
+
+    func testGrainKeepsTonalMeansAndBlackWhiteAcrossBrandsAndISO() throws {
+        let engine = try grainEngine()
+        let levels: [CGFloat] = [0, 0.02, 0.1, 0.25, 0.5, 0.75, 0.98, 1]
+        let tile = 192
+        var image = CIImage.empty()
+        for (index, value) in levels.enumerated() {
+            let patch = CIImage(color: CIColor(red: value, green: value, blue: value))
+                .cropped(to: CGRect(x: index * tile, y: 0, width: tile, height: 384))
+            image = patch.composited(over: image)
+        }
+        let baseline = pixels(engine.apply(image, parameters: .initialAA), engine: engine)
+        for brand in GrainBrand.allCases {
+            for iso: Float in [50, 400, 3200] {
+                var parameters = FilterParameters.initialAA
+                parameters.grain = GrainSettings(brand: brand, iso: iso, strength: 100)
+                let result = pixels(engine.apply(image, parameters: parameters), engine: engine)
+                for patch in levels.indices {
+                    var sum = 0.0
+                    for y in 0..<384 {
+                        for x in (patch * tile)..<((patch + 1) * tile) {
+                            let offset = (y * tile * levels.count + x) * 4
+                            sum += Double(Int(result[offset]) - Int(baseline[offset]))
+                            XCTAssertEqual(result[offset], result[offset + 1])
+                            XCTAssertEqual(result[offset], result[offset + 2])
+                        }
+                    }
+                    XCTAssertLessThanOrEqual(abs(sum / Double(tile * 384)), 1.0,
+                                             "Tonal shift: \(brand) ISO \(iso), patch \(patch)")
+                }
+                XCTAssertEqual(Array(result.prefix(4)), Array(baseline.prefix(4)))
+                XCTAssertEqual(Array(result.suffix(4)), Array(baseline.suffix(4)))
+            }
+        }
+    }
+
+    func testGrainRenderingCropUsesWholeFrameCoordinates() throws {
+        let engine = try grainEngine()
+        let image = CIImage(color: CIColor(red: 0.5, green: 0.5, blue: 0.5))
+            .cropped(to: CGRect(x: 17, y: 23, width: 384, height: 512))
+        var parameters = FilterParameters.initialAA
+        parameters.grain = GrainSettings(brand: .kodak, iso: 1600, strength: 60)
+        let result = engine.apply(image, parameters: parameters)
+        let full = pixels(result, engine: engine)
+        let crop = CGRect(x: 101, y: 117, width: 192, height: 192)
+        let cropped = pixels(result.cropped(to: crop), engine: engine)
+        for y in 0..<192 {
+            let offset = ((y + 94) * 384 + 84) * 4
+            XCTAssertEqual(Array(cropped[(y * 192 * 4)..<((y + 1) * 192 * 4)]),
+                           Array(full[offset..<(offset + 192 * 4)]))
+        }
+    }
+
+    private func grainEngine() throws -> FilterEngine {
+        guard let device = MTLCreateSystemDefaultDevice() else { throw XCTSkip("Metal unavailable") }
+        let engine = FilterEngine(metalDevice: device)
+        XCTAssertTrue(engine.supportsGrain, "Metal grain shader must compile")
+        return engine
+    }
+
+    private func pixels(_ image: CIImage, engine: FilterEngine) -> [UInt8] {
+        var bytes = [UInt8](repeating: 0, count: Int(image.extent.width * image.extent.height) * 4)
+        engine.context.render(image, toBitmap: &bytes, rowBytes: Int(image.extent.width) * 4,
+                              bounds: image.extent, format: .RGBA8, colorSpace: engine.colorSpace)
+        return bytes
     }
 }
 

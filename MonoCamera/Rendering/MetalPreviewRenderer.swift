@@ -10,6 +10,7 @@ final class MetalPreviewRenderer: NSObject, MTKViewDelegate, @unchecked Sendable
     private var latestFrameSize: CGSize?
     private var parameters: FilterParameters = .initialAA
     private var compare = false
+    private var showsGrain = false
     private var generation: UInt64 = 0
     private var drawnGeneration: UInt64 = .max
 
@@ -43,10 +44,11 @@ final class MetalPreviewRenderer: NSObject, MTKViewDelegate, @unchecked Sendable
         return latestFrameSize
     }
 
-    func update(parameters: FilterParameters, compare: Bool) {
+    func update(parameters: FilterParameters, compare: Bool, showsGrain: Bool = false) {
         lock.lock()
         self.parameters = parameters
         self.compare = compare
+        self.showsGrain = showsGrain
         generation &+= 1
         lock.unlock()
     }
@@ -58,6 +60,7 @@ final class MetalPreviewRenderer: NSObject, MTKViewDelegate, @unchecked Sendable
         let buffer = latestBuffer
         let settings = parameters
         let showsColor = compare
+        let includesGrain = showsGrain
         let currentGeneration = generation
         lock.unlock()
         guard currentGeneration != drawnGeneration else { return }
@@ -65,7 +68,7 @@ final class MetalPreviewRenderer: NSObject, MTKViewDelegate, @unchecked Sendable
               let commandBuffer = commandQueue.makeCommandBuffer() else { return }
 
         let source = CIImage(cvPixelBuffer: buffer)
-        let filtered = engine.apply(source, parameters: settings, compare: showsColor)
+        let filtered = engine.apply(source, parameters: settings, compare: showsColor, includesGrain: includesGrain)
         let target = CGRect(origin: .zero, size: view.drawableSize)
         // Show the entire camera frame. Any unused area stays black instead of cropping the photo.
         let scale = min(target.width / filtered.extent.width, target.height / filtered.extent.height)
