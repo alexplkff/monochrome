@@ -8,9 +8,11 @@ let package = Package(
     products: [.library(name: "MonoCameraCore", targets: ["MonoCameraCore"])],
     targets: [
         .target(name: "MonoCameraCore", path: "MonoCamera",
-                exclude: ["App", "Rendering", "Storage", "Views", "Info.plist", "Camera/CameraController.swift"],
+                exclude: ["App", "Rendering", "Storage/PhotoLibraryService.swift", "Views", "Info.plist",
+                          "Assets.xcassets", "Camera/CameraController.swift"],
                 sources: ["Filters/FilterParameters.swift", "Filters/FilterEngine.swift",
-                          "Presets/PresetRepository.swift", "Camera/CameraError.swift"]),
+                          "Presets/PresetRepository.swift", "Camera/CameraError.swift",
+                          "Storage/PhotoProcessingQueue.swift"]),
         .testTarget(name: "MonoCameraCoreTests", dependencies: ["MonoCameraCore"],
                     path: "MonoCameraTests")
     ]

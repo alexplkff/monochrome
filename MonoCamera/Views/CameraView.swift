@@ -25,6 +25,11 @@ struct CameraView: View {
                     HStack {
                         profileMenu
                         Spacer()
+                        if model.pendingPhotoCount > 0 {
+                            Text(model.isSaveQueueFull ? "Очередь заполнена" : "Сохранение: \(model.pendingPhotoCount)")
+                                .font(.system(size: 11, design: .monospaced))
+                                .foregroundStyle(.white.opacity(0.7))
+                        }
                     }
                     .padding(.horizontal, 24)
                     .frame(height: 44)
@@ -41,8 +46,8 @@ struct CameraView: View {
                                 .frame(width: 64, height: 64)
                                 .overlay(Circle().stroke(.white, lineWidth: 2).frame(width: 76, height: 76))
                         }
-                        .disabled(!model.cameraReady || model.isCapturing || model.isSwitchingLens)
-                        .opacity(model.isCapturing ? 0.5 : 1)
+                        .disabled(!model.canShutter)
+                        .opacity(model.canShutter ? 1 : 0.5)
                         .accessibilityLabel("Снять фото")
                         Spacer()
                         cameraMenu
@@ -59,6 +64,9 @@ struct CameraView: View {
         .onAppear { model.start() }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { model.start() } else { model.stop() }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didReceiveMemoryWarningNotification)) { _ in
+            model.handleMemoryWarning()
         }
         .alert("MonoCamera", isPresented: $model.showsError) {
             Button("OK", role: .cancel) {}
@@ -201,7 +209,7 @@ struct CameraView: View {
                 Button { model.shutter() } label: {
                     Image(systemName: "camera")
                 }
-                .disabled(!model.cameraReady || model.isCapturing || model.isSwitchingLens)
+                .disabled(!model.canShutter)
                 .accessibilityLabel("Снять фото с текущими настройками")
                 .padding(.trailing, 12)
                 Button("Cancel") { model.cancel() }

@@ -212,8 +212,12 @@ final class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDele
             let settings = AVCapturePhotoSettings(format: format)
             settings.photoQualityPrioritization = .balanced
             let identifier = settings.uniqueID
-            let delegate = PhotoDelegate(completion: completion) { [weak self] in
-                self?.sessionQueue.async { self?.captures.removeValue(forKey: identifier) }
+            let delegate = PhotoDelegate { [weak self] result in
+                guard let self else { return }
+                self.sessionQueue.async {
+                    self.captures.removeValue(forKey: identifier)
+                    DispatchQueue.main.async { completion(result) }
+                }
             }
             self.captures[identifier] = delegate
             self.photoOutput.capturePhoto(with: settings, delegate: delegate)
@@ -403,33 +407,28 @@ final class CameraController: NSObject, AVCaptureVideoDataOutputSampleBufferDele
 
 private final class PhotoDelegate: NSObject, AVCapturePhotoCaptureDelegate {
     private let completion: (Result<Data, Error>) -> Void
-    private let finished: () -> Void
-    private var delivered = false
+    private var result: Result<Data, Error>?
 
-    init(completion: @escaping (Result<Data, Error>) -> Void, finished: @escaping () -> Void) {
+    init(completion: @escaping (Result<Data, Error>) -> Void) {
         self.completion = completion
-        self.finished = finished
     }
 
     func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto,
                      error: Error?) {
-        if let error { deliver(.failure(error)); return }
+        if let error { result = .failure(error); return }
         guard let data = photo.fileDataRepresentation() else {
-            deliver(.failure(CameraError.invalidPhoto))
+            result = .failure(CameraError.invalidPhoto)
             return
         }
-        deliver(.success(data))
+        result = .success(data)
     }
 
     func photoOutput(_ output: AVCapturePhotoOutput, didFinishCaptureFor resolvedSettings: AVCaptureResolvedPhotoSettings,
                      error: Error?) {
-        if !delivered { deliver(.failure(error ?? CameraError.invalidPhoto)) }
-        finished()
-    }
-
-    private func deliver(_ result: Result<Data, Error>) {
-        guard !delivered else { return }
-        delivered = true
-        completion(result)
+        // Release the camera only after its terminal callback, including late capture errors.
+        // Rendering and PhotoKit writes run independently after this completion.
+        if let error { completion(.failure(error)) }
+        else { completion(result ?? .failure(CameraError.invalidPhoto)) }
+        result = nil
     }
 }

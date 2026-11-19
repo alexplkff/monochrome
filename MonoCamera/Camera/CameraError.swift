@@ -21,7 +21,7 @@ struct FocusPointMapper {
     }
 }
 
-enum CameraError: LocalizedError {
+enum CameraError: LocalizedError, Sendable {
     case permissionDenied
     case unavailable
     case configurationFailed

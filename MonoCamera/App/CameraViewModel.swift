@@ -1,6 +1,6 @@
 import AVFoundation
 import Foundation
-import UniformTypeIdentifiers
+import UIKit
 
 @MainActor
 final class CameraViewModel: ObservableObject {
@@ -11,6 +11,8 @@ final class CameraViewModel: ObservableObject {
     @Published var errorMessage = ""
     @Published var showsError = false
     @Published private(set) var isCapturing = false
+    @Published private(set) var pendingPhotoCount = 0
+    @Published private(set) var isSaveQueueFull = false
     @Published private(set) var cameraReady = false
     @Published private(set) var exposureBias: Float = 0
     @Published private(set) var exposureRange: ClosedRange<Float> = -2...2
@@ -24,8 +26,12 @@ final class CameraViewModel: ObservableObject {
     let renderer: MetalPreviewRenderer?
     private let controller: CameraController?
     private let repository: PresetRepository
+    private let photoQueue: PhotoProcessingQueue
+    private var saveBackgroundTask: UIBackgroundTaskIdentifier = .invalid
     private var starting = false
     private var focusRequest = 0
+
+    var canShutter: Bool { cameraReady && !isCapturing && !isSwitchingLens && !isSaveQueueFull }
 
     init() {
         let repository = PresetRepository()
@@ -36,6 +42,18 @@ final class CameraViewModel: ObservableObject {
         let renderer = MetalPreviewRenderer()
         self.renderer = renderer
         self.controller = renderer.map(CameraController.init(renderer:))
+        self.photoQueue = PhotoProcessingQueue { [engine = renderer?.engine] job in
+            guard let engine else { return .failed(.unavailable) }
+            return await PhotoLibraryService.process(job, engine: engine)
+        }
+        self.photoQueue.onStateChange = { [weak self] state in
+            guard let self else { return }
+            self.isCapturing = state.isCapturing
+            self.pendingPhotoCount = state.pendingCount
+            self.isSaveQueueFull = !state.hasCapacity
+            self.updateSaveBackgroundTask(hasPendingPhotos: state.pendingCount > 0)
+        }
+        self.photoQueue.onFailure = { [weak self] error in self?.show(error) }
         renderer?.update(parameters: draft, compare: false)
         self.controller?.onStateChange = { [weak self] ready in
             Task { @MainActor in self?.cameraReady = ready }
@@ -212,36 +230,36 @@ final class CameraViewModel: ObservableObject {
     }
 
     func shutter() {
-        guard cameraReady, !isCapturing, let controller, let renderer else { return }
-        isCapturing = true
+        guard canShutter, let controller, let reservation = photoQueue.beginCapture() else { return }
         let snapshot = draft
         controller.capture { [weak self] result in
             guard let self else { return }
             switch result {
             case .failure(let error):
-                Task { @MainActor in self.isCapturing = false; self.show(error) }
+                self.photoQueue.cancelCapture(reservation)
+                self.show(error)
             case .success(let original):
-                let engine = renderer.engine
-                Task.detached(priority: .userInitiated) {
-                    let monochrome = try? engine.jpeg(from: original, parameters: snapshot)
-                    let permitted = await PhotoLibraryService.requestAddPermission()
-                    guard permitted else {
-                        await MainActor.run { self.isCapturing = false; self.show(CameraError.libraryPermissionDenied) }
-                        return
-                    }
-                    let originalType: UTType = original.starts(with: [0xFF, 0xD8]) ? .jpeg : .heic
-                    // Separate changes retain the successful asset if its partner fails.
-                    let savedColor = await PhotoLibraryService.save(original, type: originalType)
-                    let savedMono = if let monochrome {
-                        await PhotoLibraryService.save(monochrome, type: .jpeg)
-                    } else { false }
-                    await MainActor.run {
-                        self.isCapturing = false
-                        if !savedColor && !savedMono { self.show(CameraError.saveFailed) }
-                    }
-                }
+                self.photoQueue.finishCapture(reservation, original: original, parameters: snapshot)
             }
         }
+    }
+
+    func handleMemoryWarning() { photoQueue.handleMemoryWarning() }
+
+    private func updateSaveBackgroundTask(hasPendingPhotos: Bool) {
+        if hasPendingPhotos && saveBackgroundTask == .invalid {
+            saveBackgroundTask = UIApplication.shared.beginBackgroundTask(withName: "Save photos") { [weak self] in
+                self?.endSaveBackgroundTask()
+            }
+        } else if !hasPendingPhotos {
+            endSaveBackgroundTask()
+        }
+    }
+
+    private func endSaveBackgroundTask() {
+        guard saveBackgroundTask != .invalid else { return }
+        UIApplication.shared.endBackgroundTask(saveBackgroundTask)
+        saveBackgroundTask = .invalid
     }
 
     private func refresh() {
