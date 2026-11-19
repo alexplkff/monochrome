@@ -3,7 +3,21 @@ import Foundation
 import UniformTypeIdentifiers
 
 enum PhotoLibraryService {
-    static func process(_ job: PhotoProcessingJob, engine: FilterEngine) async -> PhotoProcessingOutcome {
+    static func process(_ job: PhotoProcessingJob, engine: FilterEngine,
+                        exposureStore: DoubleExposureStore? = nil) async -> PhotoProcessingOutcome {
+        if let exposure = job.exposure, let exposureStore {
+            guard await requestAddPermission() else {
+                try? await exposureStore.markFailed(exposure.id, originalOnly: exposure.originalOnly,
+                                                    message: CameraError.libraryPermissionDenied.localizedDescription)
+                return .failed(.libraryPermissionDenied)
+            }
+            return await ExposureProcessor.process(exposure, store: exposureStore, render: { first, second, params, settings, seed in
+                try engine.jpeg(from: second, parameters: params, grainSeed: seed,
+                                firstExposure: first, exposureSettings: settings)
+            }, save: { data in
+                await save(data, type: data.starts(with: [0xFF, 0xD8]) ? .jpeg : .heic)
+            })
+        }
         guard await requestAddPermission() else { return .failed(.libraryPermissionDenied) }
         // Release full-size Core Image / ImageIO temporaries before awaiting PhotoKit.
         let monochrome = autoreleasepool {

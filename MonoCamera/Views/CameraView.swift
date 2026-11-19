@@ -1,9 +1,12 @@
 import SwiftUI
 import UIKit
+import PhotosUI
 
 struct CameraView: View {
     @StateObject private var model = CameraViewModel()
     @State private var levelChannel: LevelChannel = .master
+    @State private var exposurePhoto: PhotosPickerItem?
+    @State private var isLoadingPhoto = false
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
@@ -22,9 +25,15 @@ struct CameraView: View {
                 }
                 VStack(spacing: 0) {
                     Spacer(minLength: 0)
+                    captureModeControl
                     HStack {
                         profileMenu
                         Spacer()
+                        if !model.exposureFailures.isEmpty {
+                            Button("Повторить: \(model.exposureFailures.count)") { model.exposureControlsVisible = true }
+                                .font(.system(size: 11))
+                                .foregroundStyle(.orange)
+                        }
                         if model.pendingPhotoCount > 0 {
                             Text(model.isSaveQueueFull ? "Очередь заполнена" : "Сохранение: \(model.pendingPhotoCount)")
                                 .font(.system(size: 11, design: .monospaced))
@@ -46,8 +55,8 @@ struct CameraView: View {
                                 .frame(width: 64, height: 64)
                                 .overlay(Circle().stroke(.white, lineWidth: 2).frame(width: 76, height: 76))
                         }
-                        .disabled(!model.canShutter)
-                        .opacity(model.canShutter ? 1 : 0.5)
+                        .disabled(!model.canShutter || isLoadingPhoto)
+                        .opacity(model.canShutter && !isLoadingPhoto ? 1 : 0.5)
                         .accessibilityLabel("Снять фото")
                         Spacer()
                         cameraMenu
@@ -79,6 +88,124 @@ struct CameraView: View {
                 .presentationDragIndicator(.visible)
                 .preferredColorScheme(.dark)
         }
+        .sheet(isPresented: $model.exposureControlsVisible) {
+            doubleExposureEditor
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+                .preferredColorScheme(.dark)
+        }
+        .task(id: exposurePhoto) {
+            guard let item = exposurePhoto else { return }
+            isLoadingPhoto = true
+            do {
+                guard let data = try await item.loadTransferable(type: Data.self) else { throw CameraError.invalidPhoto }
+                await model.importExposureFirst(data)
+            } catch { model.reportImportError(error) }
+            isLoadingPhoto = false
+            exposurePhoto = nil
+        }
+    }
+
+    private var captureModeControl: some View {
+        HStack(spacing: 12) {
+            Menu {
+                Button("Обычная съёмка", systemImage: "camera") { model.setExposureEnabled(false) }
+                Button("Двойная экспозиция", systemImage: "square.on.square") { model.setExposureEnabled(true) }
+            } label: {
+                HStack(spacing: 5) {
+                    Image(systemName: model.exposureEnabled ? "square.on.square" : "camera")
+                    Text(model.exposureEnabled ? "Двойная" : "Фото")
+                    Image(systemName: "chevron.down").font(.system(size: 9))
+                }
+            }
+            .disabled(model.isCapturing || model.isPreparingExposure || isLoadingPhoto)
+            Spacer(minLength: 0)
+            if model.exposureEnabled {
+                Text(model.hasExposureFirst ? "Кадр 2/2" : "Кадр 1/2")
+                    .foregroundStyle(.white.opacity(0.65))
+                if !model.hasExposureFirst {
+                    PhotosPicker(selection: $exposurePhoto, matching: .images) {
+                        Image(systemName: "photo")
+                            .frame(width: 40, height: 40)
+                    }
+                    .accessibilityLabel("Первый кадр из Фото")
+                    .disabled(model.isCapturing || model.isPreparingExposure || isLoadingPhoto)
+                }
+                Button { model.exposureControlsVisible = true } label: {
+                    Image(systemName: "circle.lefthalf.filled").frame(width: 40, height: 40)
+                }
+                .accessibilityLabel("Настроить двойную экспозицию")
+            }
+            if isLoadingPhoto || model.isPreparingExposure { ProgressView().tint(.white) }
+        }
+        .font(.system(size: 12, weight: .medium))
+        .foregroundStyle(.white)
+        .padding(.horizontal, 24)
+        .frame(height: 40)
+    }
+
+    private var doubleExposureEditor: some View {
+        VStack(spacing: 16) {
+            HStack {
+                Text("ДВОЙНАЯ ЭКСПОЗИЦИЯ")
+                    .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                Spacer()
+                Button("Готово") { model.exposureControlsVisible = false }
+            }
+            .padding(.top, 26)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    Text(model.hasExposureFirst ? "Первый кадр готов. Следующий спуск сохранит композицию."
+                         : "Снимите первый кадр или выберите его из Фото. Затем снимите второй.")
+                        .font(.system(size: 13)).foregroundStyle(.white.opacity(0.7))
+                    Picker("Смешивание", selection: Binding(get: { model.exposureSettings.mode }, set: { value in
+                        model.updateExposureSettings { $0.mode = value }
+                    })) {
+                        ForEach(ExposureBlendMode.allCases) { mode in Text(mode.label).tag(mode) }
+                    }
+                    .pickerStyle(.segmented)
+                    editorSlider("Сила наложения, %", value: model.exposureSettings.safeStrength, range: 0...100) { value in
+                        model.updateExposureSettings { $0.strength = value }
+                    }
+                    editorSlider("Яркость первого", value: model.exposureSettings.firstBrightness, range: -3...3) { value in
+                        model.updateExposureSettings { $0.firstBrightness = value }
+                    }
+                    editorSlider("Яркость второго", value: model.exposureSettings.secondBrightness, range: -3...3) { value in
+                        model.updateExposureSettings { $0.secondBrightness = value }
+                    }
+                    if model.hasExposureFirst {
+                        Button("Отменить пару", role: .destructive) { model.cancelExposurePair() }
+                            .disabled(model.isCapturing || model.isPreparingExposure)
+                    } else if model.exposureEnabled {
+                        PhotosPicker("Первый кадр из Фото", selection: $exposurePhoto, matching: .images)
+                            .disabled(model.isCapturing || model.isPreparingExposure || isLoadingPhoto)
+                    }
+                    if !model.exposureFailures.isEmpty {
+                        Divider()
+                        Text("НЕСОХРАНЁННЫЕ")
+                            .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                        ForEach(model.exposureFailures) { record in
+                            VStack(alignment: .leading, spacing: 10) {
+                                Text(record.lastError ?? "Не удалось записать композицию.")
+                                    .font(.system(size: 12)).foregroundStyle(.orange)
+                                Button(record.secondBytes > 0 ? "Повторить сохранение композиции" : "Повторить запись оригинала") {
+                                    model.retryExposure(record.id)
+                                }
+                                .disabled(model.isCapturing || model.isPreparingExposure || model.isSaveQueueFull)
+                                if record.stage == .failed {
+                                    Button("Отменить композицию", role: .destructive) { model.discardExposureFailure(record.id) }
+                                        .disabled(model.isPreparingExposure)
+                                }
+                            }
+                        }
+                    }
+                }
+                .padding(.bottom, 30)
+            }
+        }
+        .padding(.horizontal, 20)
+        .foregroundStyle(.white)
+        .background(Color(white: 0.12))
     }
 
     private func focusSurface(size: CGSize) -> some View {

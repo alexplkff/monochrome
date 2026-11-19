@@ -1,6 +1,7 @@
 import AVFoundation
 import Foundation
 import UIKit
+import CoreImage
 
 @MainActor
 final class CameraViewModel: ObservableObject {
@@ -23,16 +24,37 @@ final class CameraViewModel: ObservableObject {
     @Published private(set) var focusIndicatorPoint: CGPoint?
     @Published private(set) var focusLocked = false
     @Published private(set) var grainPreviewEnabled = false
+    @Published private(set) var exposureEnabled = false
+    @Published private(set) var exposureSettings = DoubleExposureSettings()
+    @Published private(set) var hasExposureFirst = false
+    @Published private(set) var exposureFailures: [ExposureRecord] = []
+    @Published private(set) var exposureStoredCount = 0
+    @Published private(set) var isPreparingExposure = true
+    @Published var exposureControlsVisible = false
 
     let renderer: MetalPreviewRenderer?
     private let controller: CameraController?
     private let repository: PresetRepository
     private let photoQueue: PhotoProcessingQueue
+    private let exposureStore: DoubleExposureStore
+    private var exposureFirst: CIImage?
+    private var activeExposureID: UUID?
+    private var previewExposureID: UUID?
+    private var exposureRefreshGeneration = 0
+    private var settingsWriteTask: Task<Void, Never>?
     private var saveBackgroundTask: UIBackgroundTaskIdentifier = .invalid
     private var starting = false
     private var focusRequest = 0
 
-    var canShutter: Bool { cameraReady && !isCapturing && !isSwitchingLens && !isSaveQueueFull }
+    var canShutter: Bool {
+        cameraReady && !isCapturing && !isSwitchingLens && !isSaveQueueFull && !isPreparingExposure
+        && (!exposureEnabled || (hasExposureFirst ? exposureFirst != nil : exposureStoredCount < 3))
+    }
+
+    private var exposurePreview: DoubleExposurePreview? {
+        guard exposureEnabled, let exposureFirst else { return nil }
+        return DoubleExposurePreview(first: exposureFirst, settings: exposureSettings)
+    }
 
     init() {
         let repository = PresetRepository()
@@ -43,9 +65,11 @@ final class CameraViewModel: ObservableObject {
         let renderer = MetalPreviewRenderer()
         self.renderer = renderer
         self.controller = renderer.map(CameraController.init(renderer:))
-        self.photoQueue = PhotoProcessingQueue { [engine = renderer?.engine] job in
+        let exposureStore = DoubleExposureStore()
+        self.exposureStore = exposureStore
+        self.photoQueue = PhotoProcessingQueue { [engine = renderer?.engine, exposureStore] job in
             guard let engine else { return .failed(.unavailable) }
-            return await PhotoLibraryService.process(job, engine: engine)
+            return await PhotoLibraryService.process(job, engine: engine, exposureStore: exposureStore)
         }
         self.photoQueue.onStateChange = { [weak self] state in
             guard let self else { return }
@@ -55,6 +79,11 @@ final class CameraViewModel: ObservableObject {
             self.updateSaveBackgroundTask(hasPendingPhotos: state.pendingCount > 0)
         }
         self.photoQueue.onFailure = { [weak self] error in self?.show(error) }
+        self.photoQueue.onCompletion = { [weak self] job, outcome in
+            guard let self, job.exposure != nil else { return }
+            if case .failed(let error) = outcome { self.show(error) }
+            Task { await self.reloadExposureState() }
+        }
         renderer?.update(parameters: draft, compare: false)
         self.controller?.onStateChange = { [weak self] ready in
             Task { @MainActor in self?.cameraReady = ready }
@@ -74,6 +103,119 @@ final class CameraViewModel: ObservableObject {
         }
         self.controller?.onHistogram = { [weak self] bins in
             self?.histogram = bins
+        }
+        Task { await restoreExposure() }
+    }
+
+    private func restoreExposure() async {
+        let state = await exposureStore.snapshot()
+        exposureEnabled = state.enabled
+        exposureSettings = state.settings
+        await reloadExposureState()
+        // Resume a first-original write interrupted before the second capture.
+        for record in state.records where !record.imported && !record.firstSaved && record.secondBytes == 0 {
+            guard let reservation = photoQueue.beginCapture() else { break }
+            let job = ExposureJob(id: record.id, originalOnly: true, bufferedBytes: record.firstBytes)
+            photoQueue.finishCapture(reservation, job: PhotoProcessingJob(original: Data(), parameters: .initialAA,
+                                                                          exposure: job))
+        }
+        isPreparingExposure = false
+    }
+
+    private func reloadExposureState() async {
+        exposureRefreshGeneration += 1
+        let generation = exposureRefreshGeneration
+        let state = await exposureStore.snapshot()
+        guard generation == exposureRefreshGeneration else { return }
+        exposureFailures = state.records.filter { $0.stage == .failed || $0.lastError != nil }
+        exposureStoredCount = state.records.count
+        activeExposureID = state.activeID
+        hasExposureFirst = state.activeID != nil
+        if state.activeID != previewExposureID {
+            exposureFirst = nil
+            previewExposureID = nil
+            if let id = state.activeID {
+                let url = await exposureStore.sourceURL(id)
+                do {
+                    let image = try await Task.detached(priority: .userInitiated) {
+                        try DoubleExposureCompositor.previewImage(at: url)
+                    }.value
+                    guard generation == exposureRefreshGeneration else { return }
+                    exposureFirst = image
+                    previewExposureID = id
+                } catch {
+                    guard generation == exposureRefreshGeneration else { return }
+                    show(error)
+                }
+            }
+        }
+        publishPreview()
+    }
+
+    func setExposureEnabled(_ enabled: Bool) {
+        guard !isCapturing, !isPreparingExposure else { return }
+        exposureEnabled = enabled
+        publishPreview()
+        Task {
+            do { try await exposureStore.setEnabled(enabled) } catch { show(error) }
+        }
+    }
+
+    func updateExposureSettings(_ update: (inout DoubleExposureSettings) -> Void) {
+        update(&exposureSettings)
+        publishPreview()
+        let snapshot = exposureSettings
+        let previous = settingsWriteTask
+        settingsWriteTask = Task {
+            await previous?.value
+            do { try await exposureStore.setSettings(snapshot) } catch { show(error) }
+        }
+    }
+
+    func importExposureFirst(_ data: Data) async {
+        guard exposureEnabled, !isPreparingExposure, !isCapturing, !hasExposureFirst else { return }
+        isPreparingExposure = true
+        await settingsWriteTask?.value
+        do {
+            _ = try await exposureStore.begin(first: data, imported: true)
+            await reloadExposureState()
+        } catch { show(error) }
+        isPreparingExposure = false
+    }
+
+    func reportImportError(_ error: Error) { show(error) }
+
+    func cancelExposurePair() {
+        guard !isCapturing, !isPreparingExposure else { return }
+        isPreparingExposure = true
+        Task {
+            do { try await exposureStore.cancelActive() } catch { show(error) }
+            await reloadExposureState()
+            isPreparingExposure = false
+        }
+    }
+
+    func retryExposure(_ id: UUID) {
+        guard !isPreparingExposure, let reservation = photoQueue.beginCapture() else { return }
+        isPreparingExposure = true
+        Task {
+            do {
+                let job = try await exposureStore.retry(id)
+                photoQueue.finishCapture(reservation, job: PhotoProcessingJob(original: Data(), parameters: .initialAA,
+                                                                              exposure: job))
+            } catch { photoQueue.cancelCapture(reservation); show(error) }
+            await reloadExposureState()
+            isPreparingExposure = false
+        }
+    }
+
+    func discardExposureFailure(_ id: UUID) {
+        guard !isPreparingExposure else { return }
+        isPreparingExposure = true
+        Task {
+            do { try await exposureStore.discardFailed(id) } catch { show(error) }
+            await reloadExposureState()
+            isPreparingExposure = false
         }
     }
 
@@ -251,12 +393,15 @@ final class CameraViewModel: ObservableObject {
     }
 
     func compare(_ pressed: Bool) {
-        renderer?.update(parameters: draft, compare: pressed, showsGrain: grainPreviewEnabled)
+        renderer?.update(parameters: draft, compare: pressed, showsGrain: grainPreviewEnabled, exposure: exposurePreview)
     }
 
     func shutter() {
         guard canShutter, let controller, let reservation = photoQueue.beginCapture() else { return }
         let snapshot = draft
+        let usingExposure = exposureEnabled
+        let firstCapture = !hasExposureFirst
+        let settings = exposureSettings
         controller.capture { [weak self] result in
             guard let self else { return }
             switch result {
@@ -264,12 +409,37 @@ final class CameraViewModel: ObservableObject {
                 self.photoQueue.cancelCapture(reservation)
                 self.show(error)
             case .success(let original):
-                self.photoQueue.finishCapture(reservation, original: original, parameters: snapshot)
+                guard usingExposure else {
+                    self.photoQueue.finishCapture(reservation, original: original, parameters: snapshot)
+                    return
+                }
+                self.isPreparingExposure = true
+                Task {
+                    await self.settingsWriteTask?.value
+                    do {
+                        let job: ExposureJob
+                        if firstCapture {
+                            let record = try await self.exposureStore.begin(first: original, imported: false)
+                            job = ExposureJob(id: record.id, originalOnly: true, bufferedBytes: original.count)
+                        } else {
+                            job = try await self.exposureStore.finish(second: original, parameters: snapshot,
+                                                                      settings: settings)
+                        }
+                        self.photoQueue.finishCapture(reservation, job: PhotoProcessingJob(original: Data(),
+                                                                                           parameters: snapshot,
+                                                                                           exposure: job))
+                    } catch { self.photoQueue.cancelCapture(reservation); self.show(error) }
+                    await self.reloadExposureState()
+                    self.isPreparingExposure = false
+                }
             }
         }
     }
 
-    func handleMemoryWarning() { photoQueue.handleMemoryWarning() }
+    func handleMemoryWarning() {
+        photoQueue.handleMemoryWarning()
+        renderer?.engine.context.clearCaches()
+    }
 
     private func updateSaveBackgroundTask(hasPendingPhotos: Bool) {
         if hasPendingPhotos && saveBackgroundTask == .invalid {
@@ -295,7 +465,7 @@ final class CameraViewModel: ObservableObject {
     }
 
     private func publishPreview() {
-        renderer?.update(parameters: draft, compare: false, showsGrain: grainPreviewEnabled)
+        renderer?.update(parameters: draft, compare: false, showsGrain: grainPreviewEnabled, exposure: exposurePreview)
     }
 
     private func show(_ error: Error) {

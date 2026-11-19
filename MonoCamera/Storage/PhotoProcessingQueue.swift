@@ -4,12 +4,16 @@ struct PhotoProcessingJob: Sendable {
     let original: Data
     let parameters: FilterParameters
     let grainSeed: UInt32
+    let exposure: ExposureJob?
 
-    init(original: Data, parameters: FilterParameters, grainSeed: UInt32 = UInt32.random(in: 0...0x00FF_FFFF)) {
+    init(original: Data, parameters: FilterParameters, grainSeed: UInt32 = UInt32.random(in: 0...0x00FF_FFFF),
+         exposure: ExposureJob? = nil) {
         self.original = original
         self.parameters = parameters
         self.grainSeed = grainSeed
+        self.exposure = exposure
     }
+    var bufferedBytes: Int { original.count + (exposure?.bufferedBytes ?? 0) }
 }
 
 enum PhotoProcessingOutcome: Sendable {
@@ -38,6 +42,7 @@ final class PhotoProcessingQueue {
     private var memoryPressure = false
     var onStateChange: ((State) -> Void)?
     var onFailure: ((CameraError) -> Void)?
+    var onCompletion: ((PhotoProcessingJob, PhotoProcessingOutcome) -> Void)?
 
     init(maxPendingPhotos: Int = 3, byteAdmissionLimit: Int = 64 * 1024 * 1024,
          processor: @escaping @Sendable (PhotoProcessingJob) async -> PhotoProcessingOutcome) {
@@ -49,7 +54,7 @@ final class PhotoProcessingQueue {
 
     var state: State {
         let count = entries.count + (captureReservation == nil ? 0 : 1)
-        let bytes = entries.reduce(0) { $0 + $1.original.count }
+        let bytes = entries.reduce(0) { $0 + $1.bufferedBytes }
         return State(isCapturing: captureReservation != nil, pendingCount: count,
                      bufferedBytes: bytes,
                      hasCapacity: !memoryPressure && count < maxPendingPhotos && bytes < byteAdmissionLimit)
@@ -72,8 +77,12 @@ final class PhotoProcessingQueue {
     }
 
     func finishCapture(_ id: UUID, original: Data, parameters: FilterParameters) {
+        finishCapture(id, job: PhotoProcessingJob(original: original, parameters: parameters))
+    }
+
+    func finishCapture(_ id: UUID, job: PhotoProcessingJob) {
         guard captureReservation == id else { return }
-        entries.append(PhotoProcessingJob(original: original, parameters: parameters))
+        entries.append(job)
         captureReservation = nil
         publishState()
         startNextIfNeeded()
@@ -98,7 +107,8 @@ final class PhotoProcessingQueue {
             workerRunning = false
             clearPressureIfDrained()
             publishState()
-            if case .failed(let error) = outcome { onFailure?(error) }
+            if case .failed(let error) = outcome, entry.exposure == nil { onFailure?(error) }
+            onCompletion?(entry, outcome)
             startNextIfNeeded()
         }
     }

@@ -11,6 +11,7 @@ final class MetalPreviewRenderer: NSObject, MTKViewDelegate, @unchecked Sendable
     private var parameters: FilterParameters = .initialAA
     private var compare = false
     private var showsGrain = false
+    private var exposure: DoubleExposurePreview?
     private var generation: UInt64 = 0
     private var drawnGeneration: UInt64 = .max
 
@@ -44,11 +45,13 @@ final class MetalPreviewRenderer: NSObject, MTKViewDelegate, @unchecked Sendable
         return latestFrameSize
     }
 
-    func update(parameters: FilterParameters, compare: Bool, showsGrain: Bool = false) {
+    func update(parameters: FilterParameters, compare: Bool, showsGrain: Bool = false,
+                exposure: DoubleExposurePreview? = nil) {
         lock.lock()
         self.parameters = parameters
         self.compare = compare
         self.showsGrain = showsGrain
+        self.exposure = exposure
         generation &+= 1
         lock.unlock()
     }
@@ -61,13 +64,17 @@ final class MetalPreviewRenderer: NSObject, MTKViewDelegate, @unchecked Sendable
         let settings = parameters
         let showsColor = compare
         let includesGrain = showsGrain
+        let exposure = self.exposure
         let currentGeneration = generation
         lock.unlock()
         guard currentGeneration != drawnGeneration else { return }
         guard let buffer, let drawable = view.currentDrawable,
               let commandBuffer = commandQueue.makeCommandBuffer() else { return }
 
-        let source = CIImage(cvPixelBuffer: buffer)
+        let video = CIImage(cvPixelBuffer: buffer)
+        let source = exposure.map {
+            DoubleExposureCompositor.compose(first: $0.first, second: video, settings: $0.settings)
+        } ?? video
         let filtered = engine.apply(source, parameters: settings, compare: showsColor, includesGrain: includesGrain)
         let target = CGRect(origin: .zero, size: view.drawableSize)
         // Show the entire camera frame. Any unused area stays black instead of cropping the photo.

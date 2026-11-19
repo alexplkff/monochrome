@@ -22,6 +22,9 @@
 		B00000000000000000000010 /* PhotoLibraryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000010 /* PhotoLibraryService.swift */; };
 		B00000000000000000000011 /* CameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000011 /* CameraView.swift */; };
 		B00000000000000000000012 /* MonoCameraTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000012 /* MonoCameraTests.swift */; };
+		B00000000000000000000016 /* DoubleExposure.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000016 /* DoubleExposure.swift */; };
+		B00000000000000000000017 /* DoubleExposureStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000017 /* DoubleExposureStore.swift */; };
+		B00000000000000000000018 /* DoubleExposureTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000018 /* DoubleExposureTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -52,6 +55,9 @@
 		C00000000000000000000012 /* MonoCameraTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonoCameraTests.swift; sourceTree = "<group>"; };
 		C00000000000000000000020 /* MonoCamera.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MonoCamera.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C00000000000000000000021 /* MonoCameraTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MonoCameraTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		C00000000000000000000016 /* DoubleExposure.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoubleExposure.swift; sourceTree = "<group>"; };
+		C00000000000000000000017 /* DoubleExposureStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoubleExposureStore.swift; sourceTree = "<group>"; };
+		C00000000000000000000018 /* DoubleExposureTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoubleExposureTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -100,6 +106,7 @@
 			isa = PBXGroup;
 			children = (
 				C00000000000000000000012 /* MonoCameraTests.swift */,
+				C00000000000000000000018 /* DoubleExposureTests.swift */,
 			);
 			path = MonoCameraTests;
 			sourceTree = "<group>";
@@ -137,6 +144,7 @@
 				C00000000000000000000015 /* FilmGrainFilter.swift */,
 				C00000000000000000000005 /* FilterParameters.swift */,
 				C00000000000000000000006 /* FilterEngine.swift */,
+				C00000000000000000000016 /* DoubleExposure.swift */,
 			);
 			path = Filters;
 			sourceTree = "<group>";
@@ -163,6 +171,7 @@
 			children = (
 				C00000000000000000000014 /* PhotoProcessingQueue.swift */,
 				C00000000000000000000010 /* PhotoLibraryService.swift */,
+				C00000000000000000000017 /* DoubleExposureStore.swift */,
 			);
 			path = Storage;
 			sourceTree = "<group>";
@@ -278,6 +287,8 @@
 				B00000000000000000000009 /* PresetRepository.swift in Sources */,
 				B00000000000000000000010 /* PhotoLibraryService.swift in Sources */,
 				B00000000000000000000011 /* CameraView.swift in Sources */,
+				B00000000000000000000017 /* DoubleExposureStore.swift in Sources */,
+				B00000000000000000000016 /* DoubleExposure.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -286,6 +297,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				B00000000000000000000012 /* MonoCameraTests.swift in Sources */,
+				B00000000000000000000018 /* DoubleExposureTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

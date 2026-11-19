@@ -29,6 +29,7 @@ enum CameraError: LocalizedError, Sendable {
     case photoProcessingFailed
     case libraryPermissionDenied
     case saveFailed
+    case exposureQueueFull
 
     var errorDescription: String? {
         switch self {
@@ -38,6 +39,7 @@ enum CameraError: LocalizedError, Sendable {
         case .invalidPhoto, .photoProcessingFailed: "Не удалось обработать снимок."
         case .libraryPermissionDenied: "Разрешите добавление фото в медиатеку."
         case .saveFailed: "Не удалось сохранить снимки в Фото."
+        case .exposureQueueFull: "Завершите или повторите сохранение предыдущих композиций."
         }
     }
 }

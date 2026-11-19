@@ -90,7 +90,8 @@ final class FilterEngine: @unchecked Sendable {
         return data
     }
 
-    func jpeg(from data: Data, parameters: FilterParameters, grainSeed: UInt32 = 713_021) throws -> Data {
+    func jpeg(from data: Data, parameters: FilterParameters, grainSeed: UInt32 = 713_021,
+              firstExposure: Data? = nil, exposureSettings: DoubleExposureSettings? = nil) throws -> Data {
         if parameters.grain.safeStrength > 0 && !supportsGrain {
             throw CameraError.photoProcessingFailed
         }
@@ -98,7 +99,12 @@ final class FilterEngine: @unchecked Sendable {
             throw CameraError.invalidPhoto
         }
         // An enabled effect must never silently disappear from a saved photograph.
-        let toned = apply(image, parameters: parameters, includesGrain: false)
+        let source: CIImage
+        if let firstExposure, let exposureSettings {
+            let first = try DoubleExposureCompositor.exportFirst(firstExposure, canvas: image.extent)
+            source = DoubleExposureCompositor.compose(first: first, second: image, settings: exposureSettings)
+        } else { source = image }
+        let toned = apply(source, parameters: parameters, includesGrain: false)
         let result = try FilmGrainFilter.apply(to: toned, settings: parameters.grain, seed: grainSeed)
         var properties = image.properties
         // Pixel orientation has already been applied, so the output metadata must say upright.

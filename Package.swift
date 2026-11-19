@@ -11,6 +11,7 @@ let package = Package(
                 exclude: ["App", "Rendering", "Storage/PhotoLibraryService.swift", "Views", "Info.plist",
                           "Assets.xcassets", "Camera/CameraController.swift"],
                 sources: ["Filters/FilterParameters.swift", "Filters/FilterEngine.swift", "Filters/FilmGrainFilter.swift",
+                          "Filters/DoubleExposure.swift", "Storage/DoubleExposureStore.swift",
                           "Presets/PresetRepository.swift", "Camera/CameraError.swift",
                           "Storage/PhotoProcessingQueue.swift"]),
         .testTarget(name: "MonoCameraCoreTests", dependencies: ["MonoCameraCore"],
