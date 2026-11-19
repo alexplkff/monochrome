@@ -6,6 +6,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B00000000000000000000013 = {isa = PBXBuildFile; fileRef = C00000000000000000000013; };
 		B00000000000000000000001 = {isa = PBXBuildFile; fileRef = C00000000000000000000001; };
 		B00000000000000000000002 = {isa = PBXBuildFile; fileRef = C00000000000000000000002; };
 		B00000000000000000000003 = {isa = PBXBuildFile; fileRef = C00000000000000000000003; };
@@ -25,6 +26,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		C00000000000000000000013 = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C00000000000000000000001 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonoCameraApp.swift; sourceTree = "<group>"; };
 		C00000000000000000000002 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraViewModel.swift; sourceTree = "<group>"; };
 		C00000000000000000000003 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraError.swift; sourceTree = "<group>"; };
@@ -48,7 +50,7 @@
 
 /* Begin PBXGroup section */
 		D00000000000000000000001 = {isa = PBXGroup; children = (D00000000000000000000002, D00000000000000000000003, D00000000000000000000005); sourceTree = "<group>"; };
-		D00000000000000000000002 = {isa = PBXGroup; children = (D00000000000000000000010, D00000000000000000000011, D00000000000000000000012, D00000000000000000000013, D00000000000000000000014, D00000000000000000000015, D00000000000000000000016); path = MonoCamera; sourceTree = "<group>"; };
+		D00000000000000000000002 = {isa = PBXGroup; children = (C00000000000000000000013, D00000000000000000000010, D00000000000000000000011, D00000000000000000000012, D00000000000000000000013, D00000000000000000000014, D00000000000000000000015, D00000000000000000000016); path = MonoCamera; sourceTree = "<group>"; };
 		D00000000000000000000003 = {isa = PBXGroup; children = (C00000000000000000000012); path = MonoCameraTests; sourceTree = "<group>"; };
 		D00000000000000000000005 = {isa = PBXGroup; children = (C00000000000000000000020, C00000000000000000000021); name = Products; sourceTree = "<group>"; };
 		D00000000000000000000010 = {isa = PBXGroup; children = (C00000000000000000000001, C00000000000000000000002); path = App; sourceTree = "<group>"; };
@@ -61,7 +63,7 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		E00000000000000000000002 = {isa = PBXNativeTarget; buildConfigurationList = G00000000000000000000002; buildPhases = (F00000000000000000000001, F00000000000000000000002); buildRules = (); dependencies = (); name = MonoCamera; productName = MonoCamera; productReference = C00000000000000000000020; productType = "com.apple.product-type.application"; };
+		E00000000000000000000002 = {isa = PBXNativeTarget; buildConfigurationList = G00000000000000000000002; buildPhases = (F00000000000000000000001, F00000000000000000000002, F00000000000000000000006); buildRules = (); dependencies = (); name = MonoCamera; productName = MonoCamera; productReference = C00000000000000000000020; productType = "com.apple.product-type.application"; };
 		E00000000000000000000003 = {isa = PBXNativeTarget; buildConfigurationList = G00000000000000000000003; buildPhases = (F00000000000000000000004, F00000000000000000000005); buildRules = (); dependencies = (D00000000000000000000006); name = MonoCameraTests; productName = MonoCameraTests; productReference = C00000000000000000000021; productType = "com.apple.product-type.bundle.unit-test"; };
 /* End PBXNativeTarget section */
 
@@ -70,6 +72,7 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		F00000000000000000000006 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (B00000000000000000000013); runOnlyForDeploymentPostprocessing = 0; };
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
