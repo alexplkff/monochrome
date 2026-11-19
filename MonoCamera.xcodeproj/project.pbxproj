@@ -7,9 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		B00000000000000000000015 /* FilmGrainFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000015 /* FilmGrainFilter.swift */; };
-		B00000000000000000000014 /* PhotoProcessingQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000014 /* PhotoProcessingQueue.swift */; };
-		B00000000000000000000013 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000013 /* Assets.xcassets */; };
 		B00000000000000000000001 /* MonoCameraApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000001 /* MonoCameraApp.swift */; };
 		B00000000000000000000002 /* CameraViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000002 /* CameraViewModel.swift */; };
 		B00000000000000000000003 /* CameraError.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000003 /* CameraError.swift */; };
@@ -22,6 +19,9 @@
 		B00000000000000000000010 /* PhotoLibraryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000010 /* PhotoLibraryService.swift */; };
 		B00000000000000000000011 /* CameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000011 /* CameraView.swift */; };
 		B00000000000000000000012 /* MonoCameraTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000012 /* MonoCameraTests.swift */; };
+		B00000000000000000000013 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000013 /* Assets.xcassets */; };
+		B00000000000000000000014 /* PhotoProcessingQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000014 /* PhotoProcessingQueue.swift */; };
+		B00000000000000000000015 /* FilmGrainFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000015 /* FilmGrainFilter.swift */; };
 		B00000000000000000000016 /* DoubleExposure.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000016 /* DoubleExposure.swift */; };
 		B00000000000000000000017 /* DoubleExposureStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000017 /* DoubleExposureStore.swift */; };
 		B00000000000000000000018 /* DoubleExposureTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C00000000000000000000018 /* DoubleExposureTests.swift */; };
@@ -38,9 +38,6 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		C00000000000000000000015 /* FilmGrainFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmGrainFilter.swift; sourceTree = "<group>"; };
-		C00000000000000000000014 /* PhotoProcessingQueue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoProcessingQueue.swift; sourceTree = "<group>"; };
-		C00000000000000000000013 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C00000000000000000000001 /* MonoCameraApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonoCameraApp.swift; sourceTree = "<group>"; };
 		C00000000000000000000002 /* CameraViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraViewModel.swift; sourceTree = "<group>"; };
 		C00000000000000000000003 /* CameraError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraError.swift; sourceTree = "<group>"; };
@@ -53,6 +50,9 @@
 		C00000000000000000000010 /* PhotoLibraryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoLibraryService.swift; sourceTree = "<group>"; };
 		C00000000000000000000011 /* CameraView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraView.swift; sourceTree = "<group>"; };
 		C00000000000000000000012 /* MonoCameraTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonoCameraTests.swift; sourceTree = "<group>"; };
+		C00000000000000000000013 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		C00000000000000000000014 /* PhotoProcessingQueue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoProcessingQueue.swift; sourceTree = "<group>"; };
+		C00000000000000000000015 /* FilmGrainFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmGrainFilter.swift; sourceTree = "<group>"; };
 		C00000000000000000000020 /* MonoCamera.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MonoCamera.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C00000000000000000000021 /* MonoCameraTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MonoCameraTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C00000000000000000000016 /* DoubleExposure.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DoubleExposure.swift; sourceTree = "<group>"; };
@@ -347,6 +347,7 @@
 				ENABLE_TESTABILITY = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = MonoCamera/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -367,6 +368,7 @@
 				DEVELOPMENT_TEAM = 35T8QD6VQW;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = MonoCamera/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
